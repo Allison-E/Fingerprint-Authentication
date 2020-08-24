@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Fingerprint_Authentication"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="MainWindow" Height="350" Width="600" Loaded="Window_Loaded" Closing="Window_Closing">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="290*"/>
-            <ColumnDefinition Width="228*"/>
+            <ColumnDefinition Width="290"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Image x:Name="imageBox" HorizontalAlignment="Left" Margin="10" VerticalAlignment="Stretch" Grid.Column="0" Width="270"/>
         <StackPanel Orientation="Vertical" Grid.Column="1" Margin="0 10">
