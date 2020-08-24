@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:Fingerprint_Authentication"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <Image x:Key="Image1" Source="pack://siteoforigin:,,,/Resources/Image1.png"/>
     </Application.Resources>
 </Application>
