@@ -25,77 +25,59 @@ namespace Fingerprint_Authentication
     /// </summary>
     public partial class MainWindow : Window, DPFP.Capture.EventHandler
     {
-        private DPFP.Capture.Capture Capturer;
+        private Capture Capturer;
         private Image fingerprintImage;
-        private Enrollment enroll;
         private uint noOfScansLeft;
+        string _functionToExecute;
+        /// <summary>
+        /// The ID/key for storage and retrieval of the fingerprint templates from the DB.
+        /// </summary>
+        string Id;
 
-        public MainWindow(string functionToExecute)
+        /// <summary>
+        /// The window for either verification or enrollment of fingerprints
+        /// </summary>
+        /// <param name="functionToExecute">A string (either "enroll" or "verify") to tell what is to be done here.</param>
+        /// <param name="ID">The ID/key used to store the info of the person who wants to register or verify fingerprints.</param>
+        public MainWindow(string functionToExecute, string ID)
         {
             InitializeComponent();
             fingerprintImage = new Image();
             imageBox.DataContext = fingerprintImage;
             Binding bind = new Binding("Picture");
             bind.Source = fingerprintImage;
-
             imageBox.SetBinding(System.Windows.Controls.Image.SourceProperty, bind);
-
-            switch (functionToExecute.ToLower().Trim())
+            
+            _functionToExecute = functionToExecute;
+            Id = ID;
+            switch (_functionToExecute.ToLower().Trim())
             {
                 case "enroll":
+                    startEnrolling();
                     break;
                 case "verify":
+                    startVerifying(new DPFP.Template());
                     break;
                 default:
                     break;
             }
         }
 
-        #region Enroll methods
-        private void initialiseEnroller()
-        {
-            try
-            {
-                enroll = new Enrollment();
-                WriteStatus("Enroller initialised");
-            }
-            catch
-            {
-                WriteStatus("Error: Could not initialise enroller");
-            }
-        }
-
-        private void startEnrolling()
-        {
-            try
-            {
-                initialiseEnroller();
-                WriteStatus("Put a finger on the scanner.");
-            }
-            catch (Exception)
-            {
-                WriteStatus("Could not start capturer");
-            }
-
-            noOfScansLeft = enroll.FeaturesNeeded;
-        }
-        #endregion
-
         #region Fingerprint capture related
         public virtual void InitialiseCapturer()
         {
             try
             {
-                Capturer = new DPFP.Capture.Capture();				// Create a capture operation.
+                Capturer = new Capture();				// Create a capture operation.
 
                 if (null != Capturer)
                     Capturer.EventHandler = this;					// Subscribe for capturing events.
                 else
-                    SetPrompt("Can't initiate capture operation!");
+                    WriteErrorStatus("Capturer is null");
             }
             catch
             {
-                MessageBox.Show("Can't initiate capture operation!", "Error", MessageBoxButton.OK);
+                WriteErrorStatus("Can't initiate capture operation!");
             }
         }
 
@@ -106,7 +88,7 @@ namespace Fingerprint_Authentication
 
         private void StartCapturing()
         {
-            if (null != Capturer)
+            if (Capturer != null)
             {
                 try
                 {
@@ -115,7 +97,7 @@ namespace Fingerprint_Authentication
                 }
                 catch
                 {
-                    SetPrompt("Can't initiate capture!");
+                    WriteErrorStatus("Can't start capturing!");
                 }
             }
         }
@@ -130,18 +112,29 @@ namespace Fingerprint_Authentication
                 }
                 catch
                 {
-                    SetPrompt("Can't terminate capture!");
+                    WriteErrorStatus("Can't terminate capture!");
                 }
             }
         }
         #endregion
 
         #region Eventhandlers
-        public void OnComplete(object Capture, string ReaderSerialNumber, DPFP.Sample Sample)
+        public void OnComplete(object capture, string readerSerialNumber, DPFP.Sample sample)
         {
             WriteStatus("The fingerprint sample was captured.");
-            SetPrompt("Scan the same fingerprint again.");
-            DisplayFingerprintImage(Sample);
+            DisplayFingerprintImage(sample);
+
+            switch (_functionToExecute.ToLower().Trim())
+            {
+                case "enroll":
+                    processEnrollment(sample);
+                    break;
+                case "verify":
+                    processVerification(sample);
+                    break;
+                default:
+                    break;
+            }
         }
 
         public void OnFingerGone(object Capture, string ReaderSerialNumber)
@@ -172,51 +165,51 @@ namespace Fingerprint_Authentication
             }
             else if (CaptureFeedback == CaptureFeedback.LowContrast)
             {
-                WriteStatus("The fingerprint sample contrast is low");
+                WriteErrorStatus("The fingerprint sample contrast is low");
             }
             else if (CaptureFeedback == CaptureFeedback.NotEnoughFeatures)
             {
-                WriteStatus("Fingerprint sample does not contain enough information");
+                WriteErrorStatus("Fingerprint sample does not contain enough information");
             }
             else if (CaptureFeedback == CaptureFeedback.NoCentralRegion)
             {
-                WriteStatus("The fingerprint sample is not centered");
+                WriteErrorStatus("The fingerprint sample is not centered");
             }
             else if (CaptureFeedback == CaptureFeedback.NoFinger)
             {
-                WriteStatus("The scanned object is not a finger");
+                WriteErrorStatus("The scanned object is not a finger");
             }
             else if (CaptureFeedback == CaptureFeedback.None)
             {
-                WriteStatus("No fingerprint received");
+                WriteErrorStatus("No fingerprint received");
             }
             else if (CaptureFeedback == CaptureFeedback.TooDark)
             {
-                WriteStatus("Fingerprint sample is too dark");
+                WriteErrorStatus("Fingerprint sample is too dark");
             }
             else if (CaptureFeedback == CaptureFeedback.TooFast)
             {
-                WriteStatus("Finger was swiped too fast");
+                WriteErrorStatus("Finger was swiped too fast");
             }
             else if (CaptureFeedback == CaptureFeedback.TooHigh)
             {
-                WriteStatus("Fingerprint sample was too high");
+                WriteErrorStatus("Fingerprint sample was too high");
             }
             else if (CaptureFeedback == CaptureFeedback.TooLeft)
             {
-                WriteStatus("Fingerprint sample was too close to the left");
+                WriteErrorStatus("Fingerprint sample was too close to the left");
             }
             else if (CaptureFeedback == CaptureFeedback.TooLight)
             {
-                WriteStatus("Fingerprint sample is too light");
+                WriteErrorStatus("Fingerprint sample is too light");
             }
             else if (CaptureFeedback == CaptureFeedback.TooLow)
             {
-                WriteStatus("Fingerprint sample was too low");
+                WriteErrorStatus("Fingerprint sample was too low");
             }
             else if (CaptureFeedback == CaptureFeedback.TooNoisy)
             {
-                WriteStatus("Fingerprint sample is too noisy");
+                WriteErrorStatus("Fingerprint sample is too noisy");
             }
             else if (CaptureFeedback == CaptureFeedback.TooRight)
             {
@@ -240,21 +233,21 @@ namespace Fingerprint_Authentication
             }
             else if (CaptureFeedback == CaptureFeedback.TooStrange)
             {
-                WriteStatus("Scanned image looks strange");
+                WriteErrorStatus("Scanned image looks strange");
             }
             else
             {
-                WriteStatus("Poor fingerprint sample");
+                WriteErrorStatus("Poor fingerprint sample");
             }
         }
         #endregion
 
         public DPFP.FeatureSet ExtractFeatures(DPFP.Sample Sample, DPFP.Processing.DataPurpose Purpose)
         {
-            DPFP.Processing.FeatureExtraction Extractor = new DPFP.Processing.FeatureExtraction();  // Create a feature extractor
-            DPFP.Capture.CaptureFeedback feedback = DPFP.Capture.CaptureFeedback.None;
+            FeatureExtraction Extractor = new DPFP.Processing.FeatureExtraction();
+            CaptureFeedback feedback = DPFP.Capture.CaptureFeedback.None;
             DPFP.FeatureSet features = new DPFP.FeatureSet();
-            Extractor.CreateFeatureSet(Sample, Purpose, ref feedback, ref features);            // TODO: return features as a result?
+            Extractor.CreateFeatureSet(Sample, Purpose, ref feedback, ref features); 
             if (feedback == DPFP.Capture.CaptureFeedback.Good)
                 return features;
             else
@@ -264,8 +257,15 @@ namespace Fingerprint_Authentication
         #region Utilities
         public Bitmap ConvertSampleToBitmap(DPFP.Sample sample)
         {
+            int height = 0;
+            int width = 0;
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                height = (int)imageBox.Height;
+                width = (int)imageBox.Width;
+            });
             DPFP.Capture.SampleConversion Convertor = new DPFP.Capture.SampleConversion();  // Create a sample convertor.
-            Bitmap bitmap = null;                                                          
+            Bitmap bitmap = new Bitmap(width, height);                                                          
             Convertor.ConvertToPicture(sample, ref bitmap);                                
             return bitmap;
         }
@@ -275,6 +275,26 @@ namespace Fingerprint_Authentication
             Application.Current.Dispatcher.Invoke(() =>
             {
                 statusText.Text += "\r\n" + status;
+            });
+        }
+
+        public void WriteErrorStatus(string errorMessage)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                statusText.Foreground = System.Windows.Media.Brushes.Red;
+                statusText.Text += "\r\n" + errorMessage;
+                statusText.Foreground = System.Windows.Media.Brushes.Black;
+            });
+        }
+
+        public void WriteGoodStatus(string errorMessage)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                statusText.Foreground = System.Windows.Media.Brushes.Green;
+                statusText.Text += "\r\n" + errorMessage;
+                statusText.Foreground = System.Windows.Media.Brushes.Black;
             });
         }
 

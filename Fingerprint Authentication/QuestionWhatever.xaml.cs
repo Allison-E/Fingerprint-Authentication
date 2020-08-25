@@ -20,10 +20,12 @@ namespace Fingerprint_Authentication
     public partial class QuestionWhatever : Window
     {
         MainWindow mainWindow;
+        string ID;
 
-        public QuestionWhatever()
+        public QuestionWhatever(string ID)
         {
             InitializeComponent();
+            this.ID = ID;
         }
 
         private void enrollButton_Click(object sender, RoutedEventArgs e)
@@ -38,7 +40,7 @@ namespace Fingerprint_Authentication
 
         private void startMainWindow(string functionToExecute)
         {
-            mainWindow = new MainWindow(functionToExecute);
+            mainWindow = new MainWindow(functionToExecute, ID);
             Close();
             mainWindow.Show();
         }
