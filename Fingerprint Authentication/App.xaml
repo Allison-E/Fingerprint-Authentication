@@ -2,8 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Fingerprint_Authentication"
-             StartupUri="QuestionWhatever.xaml">
+             Startup="Application_start">
     <Application.Resources>
-        <Image x:Key="Image1" Source="pack://siteoforigin:,,,/Resources/Image1.png"/>
+        
     </Application.Resources>
 </Application>

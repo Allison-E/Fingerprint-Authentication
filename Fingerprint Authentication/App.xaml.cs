@@ -13,5 +13,13 @@ namespace Fingerprint_Authentication
     /// </summary>
     public partial class App : Application
     {
+        private void Application_start(object sender, StartupEventArgs e)
+        {
+            QuestionWhatever question = null;
+
+            if (e.Args.Count() == 1)
+                question = new QuestionWhatever(e.Args[0]);
+            question.Show();
+        }
     }
 }
