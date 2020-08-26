@@ -13,13 +13,38 @@ namespace Fingerprint_Authentication
     /// </summary>
     public partial class App : Application
     {
+        Dictionary<string, string> arguments;
+
         private void Application_start(object sender, StartupEventArgs e)
         {
-            QuestionWhatever question = null;
+            arguments = new Dictionary<string, string>();
+            MainWindow window = new MainWindow(arguments);
 
-            if (e.Args.Count() == 1)
-                question = new QuestionWhatever(e.Args[0]);
-            question.Show();
+            // Puts the arguments into the Dictionary as key/value pair.
+            for (int i = 0; i < e.Args.Length; i++)
+            {
+                if (isEven(i))
+                {
+                    arguments.Add(e.Args[i], e.Args[i + 1]);
+                    i++;
+                }
+            }
+        }
+
+        private bool isEven(int number)
+        {
+            int remainder;
+            Math.DivRem(number, 2, out remainder);
+
+            if (remainder == 0)
+                return true;
+            else
+                return false;
+        }
+
+        private void Application_Exit(object sender, ExitEventArgs e)
+        {
+
         }
     }
 }
