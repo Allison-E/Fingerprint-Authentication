@@ -13,8 +13,7 @@ namespace Fingerprint_Authentication
     partial class MainWindow
     {
         Verification verifier;
-        Verification.Result result;
-        Template templateFromDB;
+        Dictionary<Template, string> templatesFromDB;
         static uint PROBABILITY = 0X80003FE0;
 
         private void initialiseVerifier()
@@ -30,11 +29,30 @@ namespace Fingerprint_Authentication
             }
         }
 
-        private void startVerifying(Template templateFromDB)
+        private void startVerifying()
         {
-            this.templateFromDB = templateFromDB;
             initialiseVerifier();
+            templatesFromDB = new Dictionary<DPFP.Template, string>();
             WriteStatus("Put your finger on the scanner.");
+        }
+
+        private Task deserialiseFingerprintsFromDBAsync(Dictionary<byte[], string> serialisedFingerprints)
+        {
+            Task task1 = Task.Run(() =>
+            {
+                // Takes the first pair, deserialises the serialised fingerprint into a Template, and saves the 
+                // new Template and ID in a dictionary.
+                for (int i = 0; i < serialisedFingerprints.Count(); i++)
+                {
+                    KeyValuePair<byte[], string> pair = serialisedFingerprints.First();
+                    Template temp = new DPFP.Template();
+                    temp.DeSerialize(pair.Key);
+
+                    templatesFromDB.Add(temp, pair.Value);
+                    serialisedFingerprints.Remove(pair.Key);
+                }
+            });
+            return task1;
         }
 
         private void processVerification(Sample sample)
@@ -44,22 +62,33 @@ namespace Fingerprint_Authentication
             if (feature != null)
             {
                 WriteGoodStatus("The fingerprint feature set was created.");
-                if (areTheSameFingerprints(feature))
-                    WriteGoodStatus("Access granted");
+                if (findIdOfMatchingFingerprintAsync(feature) != null)
+                    WriteGoodStatus("Match found");
                 else
-                    WriteErrorStatus("Access denied");
+                    WriteErrorStatus("Match not found");
             }
         }
 
-        private bool areTheSameFingerprints(FeatureSet feature)
+        private string findIdOfMatchingFingerprintAsync(FeatureSet feature)
         {
-            Verification.Result result = null;
-            verifier.Verify(feature, templateFromDB, ref result);
+            string resultId = null;
 
-            if (result.Verified)
-                return true;
-            else
-                return false;
+            Task.Run(() =>
+            {
+                Verification.Result result;
+
+                for (int i = 0; i < templatesFromDB.Count(); i++)
+                {
+                    result = null;
+                    KeyValuePair<Template, string> pair = templatesFromDB.First();
+                    verifier.Verify(feature, pair.Key, ref result);
+                    templatesFromDB.Remove(pair.Key);
+
+                    if (result.Verified)
+                        resultId = pair.Value;
+                }
+            });
+            return resultId;
         }
     }
 }

@@ -56,8 +56,22 @@ namespace Fingerprint_Authentication
             switch (enroller.TemplateStatus)
             {
                 case Enrollment.Status.Ready:   // Report success and stop capturing
+                    byte[] byteArray = null;
                     StopCapturing();
                     // Todo: Add call to save the enrolled fingerprint
+                    enroller.Template.Serialize(ref byteArray);
+
+                    if (db.StoreFingerprintInDBAsync(enroller.Template))
+                    {
+                        System.Windows.MessageBox.Show("Fingerprint enrollment was successful!", "Success!", System.Windows.MessageBoxButton.OK);
+                        System.Windows.Application.Current.Shutdown();
+                    }
+                    else
+                    {
+                        System.Windows.MessageBox.Show("Fingerprint enrollment was unsuccessful!", "Sorry!", System.Windows.MessageBoxButton.OK);
+                        System.Windows.Application.Current.Shutdown();
+                    }
+
                     break;
 
                 case Enrollment.Status.Failed:  // Report failure and restart capturing

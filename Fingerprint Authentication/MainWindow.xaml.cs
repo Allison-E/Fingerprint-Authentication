@@ -33,30 +33,41 @@ namespace Fingerprint_Authentication
         /// The ID/key for storage and retrieval of the fingerprint templates from the DB.
         /// </summary>
         string Id;
+        Dictionary<string, string> args;
+        DB.DBHandler db;
 
         /// <summary>
         /// The window for either verification or enrollment of fingerprints
         /// </summary>
-        /// <param name="functionToExecute">A string (either "enroll" or "verify") to tell what is to be done here.</param>
+        /// <param name="args">A string (either "enroll" or "verify") to tell what is to be done here.</param>
         /// <param name="ID">The ID/key used to store the info of the person who wants to register or verify fingerprints.</param>
-        public MainWindow(string functionToExecute, string ID)
+        public MainWindow(Dictionary<string, string> arguments)
         {
             InitializeComponent();
+            args = new Dictionary<string, string>();
+            args = arguments;
+            // Check if Dictionary is null and ends app if it's null.
+            if (args == null)
+            {
+                MessageBox.Show("Argument is null. Please pass an argument to this application.", "Null argument error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+                Application.Current.Shutdown();
+            }
+            db = DB.DBHandler.Instance;
+
             fingerprintImage = new Image();
             imageBox.DataContext = fingerprintImage;
             Binding bind = new Binding("Picture");
             bind.Source = fingerprintImage;
             imageBox.SetBinding(System.Windows.Controls.Image.SourceProperty, bind);
             
-            _functionToExecute = functionToExecute;
-            Id = ID;
-            switch (_functionToExecute.ToLower().Trim())
+            switch (args["functionToExecute"].ToLower().Trim())
             {
                 case "enroll":
+                    db.SetID(args["ID"]);
                     startEnrolling();
                     break;
                 case "verify":
-                    startVerifying(new DPFP.Template());
+                    startVerifying();
                     break;
                 default:
                     break;
