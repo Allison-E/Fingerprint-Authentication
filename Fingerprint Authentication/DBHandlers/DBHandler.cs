@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DPFP;
+using System.Runtime.CompilerServices;
+using System.ComponentModel;
 
 namespace Fingerprint_Authentication.DB
 {
@@ -16,8 +18,25 @@ namespace Fingerprint_Authentication.DB
         SqlCommand command;
         SqlConnectionStringBuilder connectionStringBuilder;
         SqlConnection connection;
-        
-        static DBHandler Instance
+        bool hasFinishedGettingFingerprintsFromDB;
+
+        public event PropertyChangedEventHandler HasFinishedFingerprintTransfer;
+        public bool HasFinishedGettingFingerprintsFromDB
+        {
+            get
+            {
+                return hasFinishedGettingFingerprintsFromDB;
+            }
+            private set
+            {
+                if (hasFinishedGettingFingerprintsFromDB != value)
+                {
+                    hasFinishedGettingFingerprintsFromDB = value;
+                    onHasFinishedGettingFingerPrintsFromDB();
+                }
+            }
+        }
+        public static DBHandler Instance
         {
             get
             {
@@ -37,6 +56,11 @@ namespace Fingerprint_Authentication.DB
             initialiseSqlStuff();
         }
 
+        private void onHasFinishedGettingFingerPrintsFromDB([CallerMemberName]string propertyName = "")
+        {
+            HasFinishedFingerprintTransfer?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
         /// <summary>
         /// This sets the ID/key used to store the user's information in the DB.
         /// </summary>
@@ -54,13 +78,17 @@ namespace Fingerprint_Authentication.DB
         }
 
         // Todo: Work on this.
-        bool StoreFingerprintTemplateInDBAsync(Template template)
+        public bool StoreFingerprintInDBAsync(Template template)
         {
             return false;
         }
 
         // Todo: Work on this.
-        byte[] retrieveFingerprintFromDBAsync()
+        /// <summary>
+        /// Returns a collection of users IDs and their serialisedFingerprints.
+        /// </summary>
+        /// <returns>A <c>Dictionary<string, byte[]></c> where byte[] is the serialised fingerprint and string is the ID of the user.</returns>
+        public Dictionary<byte[], string> GetFingerprintsFromDBAsync()
         {
             return null;
         }
