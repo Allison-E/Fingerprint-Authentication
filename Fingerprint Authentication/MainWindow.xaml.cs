@@ -27,6 +27,7 @@ namespace Fingerprint_Authentication
     {
         private Capture Capturer;
         private Image fingerprintImage;
+        private Task<Dictionary<byte[], string>> fingerprintsFromDBTask;
         private uint noOfScansLeft;
         string _functionToExecute;
         /// <summary>
@@ -67,6 +68,8 @@ namespace Fingerprint_Authentication
                     startEnrolling();
                     break;
                 case "verify":
+                    fingerprintsFromDBTask = db.GetFingerprintsFromDBAsync();
+                    fingerprintsFromDBTask.Start();
                     startVerifying();
                     break;
                 default:

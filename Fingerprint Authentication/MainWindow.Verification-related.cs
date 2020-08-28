@@ -13,8 +13,9 @@ namespace Fingerprint_Authentication
     partial class MainWindow
     {
         Verification verifier;
-        Dictionary<Template, string> templatesFromDB;
+        Dictionary<Template, string> deserialisedTemplatesFromDB;
         static uint PROBABILITY = 0X80003FE0;
+        Task deserialiseFingerprintsFromDBTask;
 
         private void initialiseVerifier()
         {
@@ -29,11 +30,14 @@ namespace Fingerprint_Authentication
             }
         }
 
-        private void startVerifying()
+        private async void startVerifying()
         {
             initialiseVerifier();
-            templatesFromDB = new Dictionary<DPFP.Template, string>();
+            deserialisedTemplatesFromDB = new Dictionary<DPFP.Template, string>();
             WriteStatus("Put your finger on the scanner.");
+            Dictionary<byte[], string> fingerprintsFromDB = await fingerprintsFromDBTask;
+            deserialiseFingerprintsFromDBTask = deserialiseFingerprintsFromDBAsync(fingerprintsFromDB);
+            deserialiseFingerprintsFromDBTask.Start();
         }
 
         private Task deserialiseFingerprintsFromDBAsync(Dictionary<byte[], string> serialisedFingerprints)
@@ -48,47 +52,50 @@ namespace Fingerprint_Authentication
                     Template temp = new DPFP.Template();
                     temp.DeSerialize(pair.Key);
 
-                    templatesFromDB.Add(temp, pair.Value);
+                    deserialisedTemplatesFromDB.Add(temp, pair.Value);
                     serialisedFingerprints.Remove(pair.Key);
                 }
             });
             return task1;
         }
 
-        private void processVerification(Sample sample)
+        private async void processVerification(Sample sample)
         {
             FeatureSet feature = ExtractFeatures(sample, DataPurpose.Verification);
 
             if (feature != null)
             {
                 WriteGoodStatus("The fingerprint feature set was created.");
-                if (findIdOfMatchingFingerprintAsync(feature) != null)
+                if (findIDOfMatchingFingerprintAsync(feature) != null)
                     WriteGoodStatus("Match found");
                 else
                     WriteErrorStatus("Match not found");
             }
         }
 
-        private string findIdOfMatchingFingerprintAsync(FeatureSet feature)
+        private async Task<string> findIDOfMatchingFingerprintAsync(FeatureSet feature)
         {
             string resultId = null;
+            await deserialiseFingerprintsFromDBTask;
 
-            Task.Run(() =>
+            Task<string> task = Task.Run(() =>
             {
                 Verification.Result result;
 
-                for (int i = 0; i < templatesFromDB.Count(); i++)
+                for (int i = 0; i < deserialisedTemplatesFromDB.Count(); i++)
                 {
                     result = null;
-                    KeyValuePair<Template, string> pair = templatesFromDB.First();
+                    KeyValuePair<Template, string> pair = deserialisedTemplatesFromDB.First();
                     verifier.Verify(feature, pair.Key, ref result);
-                    templatesFromDB.Remove(pair.Key);
+                    deserialisedTemplatesFromDB.Remove(pair.Key);
 
                     if (result.Verified)
                         resultId = pair.Value;
                 }
+                return resultId;
             });
-            return resultId;
+
+            return task.Result;
         }
     }
 }
