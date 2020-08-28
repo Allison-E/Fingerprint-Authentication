@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -128,9 +129,47 @@ namespace Fingerprint_Authentication.DB
 
         // Todo: Work on this.
 
-        public Dictionary<byte[], string> GetFingerprintsFromDBAsync()
+        public Task<Dictionary<byte[], string>> GetFingerprintsFromDBAsync()
         {
-            return null;
+            command.CommandText = @"SELECT [[Put the key column name]], [[Put the name of your fingerprint column]] 
+                                    FROM [[Put your table name here]]";
+            Dictionary<byte[], string> fingerprintsInDB = new Dictionary<byte[], string>();
+
+            return Task.Run(() =>
+            {
+                try
+                {
+                    connection.Open();
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            byte[] fingerprint = null;
+                            string id = readARow(reader, out fingerprint);
+                            fingerprintsInDB.Add(fingerprint, id);
+                        }
+                    }
+                    connection.Close();
+                }
+                catch
+                {
+                    throw new CouldNotFindSavedFingerprintException();
+                }
+                finally
+                {
+                    if (connection.State == ConnectionState.Open)
+                    {
+                        connection.Close();
+                    }
+                }
+                return fingerprintsInDB;
+            });
+        }
+
+        private string readARow(IDataRecord record, out byte[] serialisedFingerprint)
+        {
+            serialisedFingerprint = (byte[])record[1];
+            return (string)record[0];
         }
 
         private void initialiseSqlStuff()
