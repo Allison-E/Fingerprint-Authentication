@@ -27,15 +27,11 @@ namespace Fingerprint_Authentication
     {
         private Capture Capturer;
         private Image fingerprintImage;
-        private Task<Dictionary<byte[], string>> fingerprintsFromDBTask;
         private uint noOfScansLeft;
         string _functionToExecute;
-        /// <summary>
-        /// The ID/key for storage and retrieval of the fingerprint templates from the DB.
-        /// </summary>
-        string Id;
-        Dictionary<string, string> args;
-        DB.DBHandler db;
+        private DB.DBHandler db;
+        private Dictionary<string, string> args;
+        private Task<Dictionary<byte[], string>> fingerprintsFromDBTask;
 
         /// <summary>
         /// The window for either verification or enrollment of fingerprints
@@ -45,36 +41,37 @@ namespace Fingerprint_Authentication
         public MainWindow(Dictionary<string, string> arguments)
         {
             InitializeComponent();
-            args = new Dictionary<string, string>();
-            args = arguments;
-            // Check if Dictionary is null and ends app if it's null.
-            if (args == null)
-            {
-                MessageBox.Show("Argument is null. Please pass an argument to this application.", "Null argument error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
-                Application.Current.Shutdown();
-            }
-            db = DB.DBHandler.Instance;
-
             fingerprintImage = new Image();
             imageBox.DataContext = fingerprintImage;
             Binding bind = new Binding("Picture");
             bind.Source = fingerprintImage;
             imageBox.SetBinding(System.Windows.Controls.Image.SourceProperty, bind);
-            
-            switch (args["functionToExecute"].ToLower().Trim())
+            db = DB.DBHandler.Instance;
+
+            args = arguments;
+            // Check if Dictionary is null and ends app if it's null.
+            if (args == null || args.Count == 0)
             {
-                case "enroll":
-                    db.SetID(args["ID"]);
-                    startEnrolling();
-                    break;
-                case "verify":
-                    fingerprintsFromDBTask = db.GetFingerprintsFromDBAsync();
-                    fingerprintsFromDBTask.Start();
-                    startVerifying();
-                    break;
-                default:
-                    break;
+                MessageBox.Show("Argument is null. Please pass an argument to this application.", "Null argument error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+                Application.Current.Shutdown();
             }
+            else
+            {
+                switch (args["functionToExecute"].ToLower().Trim())
+                {
+                    case "enroll":
+                        db.SetID(args["ID"]);
+                        startEnrolling();
+                        break;
+                    case "verify":
+                        fingerprintsFromDBTask = db.GetFingerprintsFromDBAsync();
+                        fingerprintsFromDBTask.Start();
+                        startVerifying();
+                        break;
+                    default:
+                        break;
+                }
+           }
         }
 
         #region Fingerprint capture related
@@ -84,7 +81,7 @@ namespace Fingerprint_Authentication
             {
                 Capturer = new Capture();				// Create a capture operation.
 
-                if (null != Capturer)
+                if (Capturer != null)
                     Capturer.EventHandler = this;					// Subscribe for capturing events.
                 else
                     WriteErrorStatus("Capturer is null");
@@ -141,7 +138,7 @@ namespace Fingerprint_Authentication
             switch (_functionToExecute.ToLower().Trim())
             {
                 case "enroll":
-                    processEnrollment(sample);
+                    processEnrollmentAndSaveToDB(sample);
                     break;
                 case "verify":
                     processVerification(sample);
@@ -286,10 +283,7 @@ namespace Fingerprint_Authentication
 
         public void WriteStatus(string status)
         {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                statusText.Text += "\r\n" + status;
-            });
+            Application.Current.Dispatcher.Invoke(() => statusText.Text += "\r\n" + status);
         }
 
         public void WriteErrorStatus(string errorMessage)
@@ -302,12 +296,12 @@ namespace Fingerprint_Authentication
             });
         }
 
-        public void WriteGoodStatus(string errorMessage)
+        public void WriteGoodStatus(string goodMessage)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
                 statusText.Foreground = System.Windows.Media.Brushes.Green;
-                statusText.Text += "\r\n" + errorMessage;
+                statusText.Text += "\r\n" + goodMessage;
                 statusText.Foreground = System.Windows.Media.Brushes.Black;
             });
         }

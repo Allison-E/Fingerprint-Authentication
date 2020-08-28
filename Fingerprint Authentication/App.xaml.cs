@@ -14,6 +14,7 @@ namespace Fingerprint_Authentication
     public partial class App : Application
     {
         Dictionary<string, string> arguments;
+        MainWindow mainWindow;
 
         private void Application_start(object sender, StartupEventArgs e)
         {
@@ -27,7 +28,7 @@ namespace Fingerprint_Authentication
                     i++;
                 }
             }
-            MainWindow mainWindow = new MainWindow(arguments);
+            mainWindow = new MainWindow(arguments);
             mainWindow.Show();
         }
 
@@ -40,10 +41,6 @@ namespace Fingerprint_Authentication
                 return true;
             else
                 return false;
-        }
-
-        private void Application_Exit(object sender, ExitEventArgs e)
-        {
         }
     }
 }

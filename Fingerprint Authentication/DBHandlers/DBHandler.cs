@@ -3,13 +3,8 @@ using System.Data;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using DPFP;
 using System.Runtime.InteropServices;
-using System.Net.NetworkInformation;
-using System.Runtime.CompilerServices;
-using System.ComponentModel;
 
 namespace Fingerprint_Authentication.DB
 {
@@ -21,24 +16,7 @@ namespace Fingerprint_Authentication.DB
         SqlCommand command;
         SqlConnectionStringBuilder connectionStringBuilder;
         SqlConnection connection;
-        bool hasFinishedGettingFingerprintsFromDB;
-
-        public event PropertyChangedEventHandler HasFinishedFingerprintTransfer;
-        public bool HasFinishedGettingFingerprintsFromDB
-        {
-            get
-            {
-                return hasFinishedGettingFingerprintsFromDB;
-            }
-            private set
-            {
-                if (hasFinishedGettingFingerprintsFromDB != value)
-                {
-                    hasFinishedGettingFingerprintsFromDB = value;
-                    onHasFinishedGettingFingerPrintsFromDB();
-                }
-            }
-        }
+        
         public static DBHandler Instance
         {
             get
@@ -57,11 +35,6 @@ namespace Fingerprint_Authentication.DB
         {
             noOfChangesAllowedForTheId = 1;
             initialiseSqlStuff();
-        }
-
-        private void onHasFinishedGettingFingerPrintsFromDB([CallerMemberName]string propertyName = "")
-        {
-            HasFinishedFingerprintTransfer?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         /// <summary>
@@ -97,37 +70,38 @@ namespace Fingerprint_Authentication.DB
 
             return Task.Run(async () =>
             {
-                isDone = false;
+            isDone = false;
 
+            try
+            {
+                connection.Open();
+                command.ExecuteNonQuery();
                 try
                 {
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                    try
-                    {
-                        // Cross-checks to make sure the fingerprint was saved.
-                        Task<bool> check = checkIfStorageOfFingerprintWorkedAsync(serialisedFingerprint);
-                        bool checkResult = await check;
-                        if (checkResult)
-                            isDone = true;
-                    }
-                    catch (CouldNotFindSavedFingerprintException)
-                    {
-
-                        throw new CouldNotStoreFingerprintInDBException();
-                    }
-                    connection.Close();
+                    // Cross-checks to make sure the fingerprint was saved.
+                    bool checkResult = await checkIfStorageOfFingerprintWorkedAsync(serialisedFingerprint);
+                    if (checkResult)
+                        isDone = true;
                 }
-                catch
+                catch (CouldNotFindSavedFingerprintException)
                 {
                     throw new CouldNotStoreFingerprintInDBException();
+                }
+                connection.Close();
+            }
+            catch
+            {
+                throw new CouldNotStoreFingerprintInDBException();
+            }
+            finally
+            {
+                if (connection.State == ConnectionState.Open)
+                    connection.Close();
                 }
                 return isDone;
 
             });
         }
-
-        // Todo: Work on this.
 
         public Task<Dictionary<byte[], string>> GetFingerprintsFromDBAsync()
         {

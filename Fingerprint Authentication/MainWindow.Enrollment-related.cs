@@ -9,7 +9,7 @@ using DPFP;
 namespace Fingerprint_Authentication
 {
 	// Fingerprint enrollment methods are here
-	partial class MainWindow
+	public partial class MainWindow
 	{
 		private Enrollment enroller;
 
@@ -49,7 +49,7 @@ namespace Fingerprint_Authentication
 				WriteStatus($"Scans left: {noOfScansLeft}.");
 		}
 
-		private async void processEnrollment(Sample sample)
+		private async void processEnrollmentAndSaveToDB(Sample sample)
 		{
 			createFeatureAndAddItToTheEnroller(sample);
 
@@ -71,7 +71,7 @@ namespace Fingerprint_Authentication
 					{
 						System.Windows.MessageBox.Show("Fingerprint enrollment was unsuccessful!", "Sorry!", System.Windows.MessageBoxButton.OK);
 						System.Windows.Application.Current.Shutdown();
-			}
+			        }
 
 					if (storageWasSuccessful)
 					{
@@ -90,7 +90,6 @@ namespace Fingerprint_Authentication
 					StopCapturing();
 					StartCapturing();
 					break;
-					
 			}
 		}
 	}
