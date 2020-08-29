@@ -14,12 +14,11 @@ namespace Fingerprint_Authentication
     public partial class App : Application
     {
         Dictionary<string, string> arguments;
+        MainWindow mainWindow;
 
         private void Application_start(object sender, StartupEventArgs e)
         {
             arguments = new Dictionary<string, string>();
-            MainWindow window = new MainWindow(arguments);
-
             // Puts the arguments into the Dictionary as key/value pair.
             for (int i = 0; i < e.Args.Length; i++)
             {
@@ -29,6 +28,8 @@ namespace Fingerprint_Authentication
                     i++;
                 }
             }
+            mainWindow = new MainWindow(arguments);
+            mainWindow.Show();
         }
 
         private bool isEven(int number)
@@ -40,11 +41,6 @@ namespace Fingerprint_Authentication
                 return true;
             else
                 return false;
-        }
-
-        private void Application_Exit(object sender, ExitEventArgs e)
-        {
-
         }
     }
 }

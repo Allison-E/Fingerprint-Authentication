@@ -1,12 +1,10 @@
 ﻿using System;
+using System.Data;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using DPFP;
-using System.Runtime.CompilerServices;
-using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace Fingerprint_Authentication.DB
 {
@@ -18,24 +16,7 @@ namespace Fingerprint_Authentication.DB
         SqlCommand command;
         SqlConnectionStringBuilder connectionStringBuilder;
         SqlConnection connection;
-        bool hasFinishedGettingFingerprintsFromDB;
-
-        public event PropertyChangedEventHandler HasFinishedFingerprintTransfer;
-        public bool HasFinishedGettingFingerprintsFromDB
-        {
-            get
-            {
-                return hasFinishedGettingFingerprintsFromDB;
-            }
-            private set
-            {
-                if (hasFinishedGettingFingerprintsFromDB != value)
-                {
-                    hasFinishedGettingFingerprintsFromDB = value;
-                    onHasFinishedGettingFingerPrintsFromDB();
-                }
-            }
-        }
+        
         public static DBHandler Instance
         {
             get
@@ -56,13 +37,8 @@ namespace Fingerprint_Authentication.DB
             initialiseSqlStuff();
         }
 
-        private void onHasFinishedGettingFingerPrintsFromDB([CallerMemberName]string propertyName = "")
-        {
-            HasFinishedFingerprintTransfer?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         /// <summary>
-        /// This sets the ID/key used to store the user's information in the DB.
+        /// This sets the ID/key associated to the user's information in the DB.
         /// </summary>
         /// <remarks>
         /// Note: This can only be set once in the lifetime of this application.
@@ -77,20 +53,97 @@ namespace Fingerprint_Authentication.DB
             }
         }
 
-        // Todo: Work on this.
-        public bool StoreFingerprintInDBAsync(Template template)
+        // Todo: Test this.
+        /// <summary>
+        /// Stores the serialised fingerprint (of data type byte[]) in the database.
+        /// </summary>
+        /// <param name="serialisedFingerprint">A <c>byte[]</c> which is the serialised fingerprint.</param>
+        /// <returns>A <c>Task<bool></c> which tells if the storage was successful or not.</returns>
+        public Task<bool> StoreFingerprintInDBAsync(byte[] serialisedFingerprint)
         {
-            return false;
+            bool isDone;
+            command.CommandText = @"INSERT INTO [[Put your database's name]] (id, [[Put the name of your fingerprint column]])
+                                    VALUES (" + id + ", fingerprintParameter)";
+            SqlParameter fingerprintParameter = new SqlParameter("fingerprintParameter", serialisedFingerprint);
+            fingerprintParameter.SqlDbType = System.Data.SqlDbType.VarBinary;
+            command.Parameters.Add(fingerprintParameter);
+
+            return Task.Run(async () =>
+            {
+            isDone = false;
+
+            try
+            {
+                connection.Open();
+                command.ExecuteNonQuery();
+                try
+                {
+                    // Cross-checks to make sure the fingerprint was saved.
+                    bool checkResult = await checkIfStorageOfFingerprintWorkedAsync(serialisedFingerprint);
+                    if (checkResult)
+                        isDone = true;
+                }
+                catch (CouldNotFindSavedFingerprintException)
+                {
+                    throw new CouldNotStoreFingerprintInDBException();
+                }
+                connection.Close();
+            }
+            catch
+            {
+                throw new CouldNotStoreFingerprintInDBException();
+            }
+            finally
+            {
+                if (connection.State == ConnectionState.Open)
+                    connection.Close();
+                }
+                return isDone;
+
+            });
         }
 
-        // Todo: Work on this.
-        /// <summary>
-        /// Returns a collection of users IDs and their serialisedFingerprints.
-        /// </summary>
-        /// <returns>A <c>Dictionary<string, byte[]></c> where byte[] is the serialised fingerprint and string is the ID of the user.</returns>
-        public Dictionary<byte[], string> GetFingerprintsFromDBAsync()
+        public Task<Dictionary<byte[], string>> GetFingerprintsFromDBAsync()
         {
-            return null;
+            command.CommandText = @"SELECT [[Put the key column name]], [[Put the name of your fingerprint column]] 
+                                    FROM [[Put your table name here]]";
+            Dictionary<byte[], string> fingerprintsInDB = new Dictionary<byte[], string>();
+
+            return Task.Run(() =>
+            {
+                try
+                {
+                    connection.Open();
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            byte[] fingerprint = null;
+                            string id = readARow(reader, out fingerprint);
+                            fingerprintsInDB.Add(fingerprint, id);
+                        }
+                    }
+                    connection.Close();
+                }
+                catch
+                {
+                    throw new CouldNotFindSavedFingerprintException();
+                }
+                finally
+                {
+                    if (connection.State == ConnectionState.Open)
+                    {
+                        connection.Close();
+                    }
+                }
+                return fingerprintsInDB;
+            });
+        }
+
+        private string readARow(IDataRecord record, out byte[] serialisedFingerprint)
+        {
+            serialisedFingerprint = (byte[])record[1];
+            return (string)record[0];
         }
 
         private void initialiseSqlStuff()
@@ -107,5 +160,59 @@ namespace Fingerprint_Authentication.DB
             connection.ConnectionString = connectionStringBuilder.ConnectionString;
             command.Connection = connection;
         }
+
+        [DllImport("wininet.dll")]
+        private extern static bool InternetGetConnectedState(out int Description, int ReservedValue);
+
+        public static bool IsConnectedToTheInternet()
+        {
+            int description;
+            return InternetGetConnectedState(out description, 0);
+        }
+
+        private Task<bool> checkIfStorageOfFingerprintWorkedAsync(byte[] originalByte)
+        {
+            command.CommandText = @"SELECT [[Put the name of your fingerprint column]] 
+                                    FROM [[Put your table name here]] 
+                                    WHERE id = " + id;
+            byte[] byteFromDB;
+
+            return Task.Run(() =>
+            {
+                try
+                {
+                    byteFromDB = command.ExecuteScalar() as byte[];
+                }
+                catch
+                {
+                    throw new CouldNotFindSavedFingerprintException();
+                }
+
+                return originalByte.SequenceEqual(byteFromDB);
+            });
+        }
+    }
+
+    [Serializable]
+    public class CouldNotStoreFingerprintInDBException : Exception
+    {
+        public CouldNotStoreFingerprintInDBException() { }
+        public CouldNotStoreFingerprintInDBException(string message) : base(message) { }
+        public CouldNotStoreFingerprintInDBException(string message, Exception inner) : base(message, inner) { }
+        protected CouldNotStoreFingerprintInDBException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+    }
+
+
+    [Serializable]
+    public class CouldNotFindSavedFingerprintException : Exception
+    {
+        public CouldNotFindSavedFingerprintException() { }
+        public CouldNotFindSavedFingerprintException(string message) : base(message) { }
+        public CouldNotFindSavedFingerprintException(string message, Exception inner) : base(message, inner) { }
+        protected CouldNotFindSavedFingerprintException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 }
