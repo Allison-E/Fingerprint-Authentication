@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Data.SQLite;
 using System.Linq;
 using System.Threading.Tasks;
@@ -115,7 +114,7 @@ namespace Fingerprint_Authentication.DB
                 try
                 {
                     connection.Open();
-                    using (SqlDataReader reader = command.ExecuteReader())
+                    using (SqLiteDataReader reader = command.ExecuteReader())
                     {
                         while (reader.Read())
                         {
