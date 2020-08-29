@@ -2,6 +2,7 @@
 using System.Data;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Data.SQLite;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
@@ -13,9 +14,9 @@ namespace Fingerprint_Authentication.DB
         static DBHandler _instance;
         string id;
         int noOfChangesAllowedForTheId;
-        SqlCommand command;
-        SqlConnectionStringBuilder connectionStringBuilder;
-        SqlConnection connection;
+        SQLiteCommand command;
+        SQLiteConnectionStringBuilder connectionStringBuilder;
+        SQLiteConnection connection;
         
         public static DBHandler Instance
         {
@@ -148,12 +149,12 @@ namespace Fingerprint_Authentication.DB
 
         private void initialiseSqlStuff()
         {
-            command = new SqlCommand();
-            connectionStringBuilder = new SqlConnectionStringBuilder();
-            connection = new SqlConnection();
+            command = new SQLiteCommand();
+            connectionStringBuilder = new SQLiteConnectionStringBuilder();
+            connection = new SQLiteConnection();
 
             connectionStringBuilder.DataSource = "";    // Put in the name or network address of the instance of your SQL server here.
-            connectionStringBuilder.InitialCatalog = ""; // Put in the name of the DB here.
+            connectionStringBuilder. = ""; // Put in the name of the DB here.
             connectionStringBuilder.Password = "";  // Put in the password of your DB here (if there's one).
             connectionStringBuilder.UserID = "";    // Put in the admin ID here.
 
