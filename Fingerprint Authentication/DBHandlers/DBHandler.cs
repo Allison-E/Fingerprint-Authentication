@@ -151,7 +151,7 @@ namespace Fingerprint_Authentication.DB
             connectionStringBuilder = new SQLiteConnectionStringBuilder();
             connection = new SQLiteConnection();
 
-            connectionStringBuilder.DataSource = "";    // Put in the name or network address of the instance of your SQL server here.
+            connectionStringBuilder.DataSource = @"C:\Users\MVT1\Desktop\finalyearproject\db.sqlite3";    // Put in the name or network address of the instance of your SQL server here.
             connectionStringBuilder.Password = "";  // Put in the password of your DB here (if there's one).
 
             connection.ConnectionString = connectionStringBuilder.ConnectionString;
