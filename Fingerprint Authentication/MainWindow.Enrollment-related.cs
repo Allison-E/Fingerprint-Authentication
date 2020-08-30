@@ -46,7 +46,10 @@ namespace Fingerprint_Authentication
 			}
 
 			if (noOfScansLeft != 0)
+			{
 				WriteStatus($"Scans left: {noOfScansLeft}.");
+				WriteStatus("Put your finger on the fingerprint scanner.");
+			}
 		}
 
 		private async void processEnrollmentAndSaveToDB(Sample sample)
@@ -71,7 +74,7 @@ namespace Fingerprint_Authentication
 					{
 						System.Windows.MessageBox.Show("Fingerprint enrollment was unsuccessful!", "Sorry!", System.Windows.MessageBoxButton.OK);
 						System.Windows.Application.Current.Shutdown();
-			        }
+					}
 
 					if (storageWasSuccessful)
 					{
