@@ -11,7 +11,7 @@ namespace Fingerprint_Authentication.DB
     public class DBHandler
     {
         static DBHandler _instance;
-        string id;
+        int id;
         int noOfChangesAllowedForTheId;
         SQLiteCommand command;
         SQLiteConnectionStringBuilder connectionStringBuilder;
@@ -44,7 +44,7 @@ namespace Fingerprint_Authentication.DB
         /// Note: This can only be set once in the lifetime of this application.
         /// </remarks>
         /// <param name="Id">The ID/key</param>
-        public void SetID(string Id)
+        public void SetID(int Id)
         {
             if (noOfChangesAllowedForTheId != 0)
             {
@@ -52,8 +52,7 @@ namespace Fingerprint_Authentication.DB
                 noOfChangesAllowedForTheId--;
             }
         }
-
-        // Todo: Test this.
+        
         /// <summary>
         /// Stores the serialised fingerprint (of data type byte[]) in the database.
         /// </summary>
@@ -62,52 +61,52 @@ namespace Fingerprint_Authentication.DB
         public Task<bool> StoreFingerprintInDBAsync(byte[] serialisedFingerprint)
         {
             bool isDone;
-            command.CommandText = @"INSERT INTO [[Put your database's name]] (id, [[Put the name of your fingerprint column]])
-                                    VALUES (" + id + ", fingerprintParameter)";
-            SQLiteParameter fingerprintParameter = new SQLiteParameter("fingerprintParameter", serialisedFingerprint);
+            command.CommandText = @"INSERT INTO eCapture_staff (id, finger_print)
+                                    VALUES (" + id + ", @fingerprintParameter)";
+            SQLiteParameter fingerprintParameter = new SQLiteParameter("@fingerprintParameter", serialisedFingerprint);
             fingerprintParameter.DbType = DbType.Binary;
             command.Parameters.Add(fingerprintParameter);
 
             return Task.Run(async () =>
             {
-            isDone = false;
+                isDone = false;
 
-            try
-            {
-                connection.Open();
-                command.ExecuteNonQuery();
                 try
                 {
-                    // Cross-checks to make sure the fingerprint was saved.
-                    bool checkResult = await checkIfStorageOfFingerprintWorkedAsync(serialisedFingerprint);
-                    if (checkResult)
-                        isDone = true;
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                    try
+                    {
+                        // Cross-checks to make sure the fingerprint was saved.
+                        bool checkResult = await checkIfStorageOfFingerprintWorkedAsync(serialisedFingerprint);
+                        if (checkResult)
+                            isDone = true;
+                    }
+                    catch (CouldNotFindSavedFingerprintException)
+                    {
+                        throw new CouldNotStoreFingerprintInDBException();
+                    }
+                    connection.Close();
                 }
-                catch (CouldNotFindSavedFingerprintException)
+                catch
                 {
                     throw new CouldNotStoreFingerprintInDBException();
                 }
-                connection.Close();
-            }
-            catch
-            {
-                throw new CouldNotStoreFingerprintInDBException();
-            }
-            finally
-            {
-                if (connection.State == ConnectionState.Open)
-                    connection.Close();
-                }
+                finally
+                {
+                    if (connection.State == ConnectionState.Open)
+                        connection.Close();
+                    }
                 return isDone;
 
             });
         }
 
-        public Task<Dictionary<byte[], string>> GetFingerprintsFromDBAsync()
+        public Task<Dictionary<byte[], int>> GetFingerprintsFromDBAsync()
         {
-            command.CommandText = @"SELECT [[Put the key column name]], [[Put the name of your fingerprint column]] 
-                                    FROM [[Put your table name here]]";
-            Dictionary<byte[], string> fingerprintsInDB = new Dictionary<byte[], string>();
+            command.CommandText = @"SELECT id, finger_print 
+                                    FROM eCapture_staff";
+            Dictionary<byte[], int> fingerprintsInDB = new Dictionary<byte[], int>();
 
             return Task.Run(() =>
             {
@@ -119,7 +118,7 @@ namespace Fingerprint_Authentication.DB
                         while (reader.Read())
                         {
                             byte[] fingerprint = null;
-                            string id = readARow(reader, out fingerprint);
+                            int id = readARow(reader, out fingerprint);
                             fingerprintsInDB.Add(fingerprint, id);
                         }
                     }
@@ -140,10 +139,10 @@ namespace Fingerprint_Authentication.DB
             });
         }
 
-        private string readARow(IDataRecord record, out byte[] serialisedFingerprint)
+        private int readARow(IDataRecord record, out byte[] serialisedFingerprint)
         {
             serialisedFingerprint = (byte[])record[1];
-            return (string)record[0];
+            return (int)record[0];
         }
 
         private void initialiseSqlStuff()
@@ -153,9 +152,7 @@ namespace Fingerprint_Authentication.DB
             connection = new SQLiteConnection();
 
             connectionStringBuilder.DataSource = "";    // Put in the name or network address of the instance of your SQL server here.
-            //connectionStringBuilder. = ""; // Put in the name of the DB here.
             connectionStringBuilder.Password = "";  // Put in the password of your DB here (if there's one).
-            //connectionStringBuilder.UserID = "";    // Put in the admin ID here.
 
             connection.ConnectionString = connectionStringBuilder.ConnectionString;
             command.Connection = connection;
@@ -172,8 +169,8 @@ namespace Fingerprint_Authentication.DB
 
         private Task<bool> checkIfStorageOfFingerprintWorkedAsync(byte[] originalByte)
         {
-            command.CommandText = @"SELECT [[Put the name of your fingerprint column]] 
-                                    FROM [[Put your table name here]] 
+            command.CommandText = @"SELECT finger_print
+                                    FROM eCapture_staff 
                                     WHERE id = " + id;
             byte[] byteFromDB;
 
