@@ -185,7 +185,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Third-Party Software\Setup.exe" />
-    <Content Include="Third-Party Software\x64\Setup.exe" />
+    <None Include="Third-Party Software\x64\Setup.exe" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\..\..\..\..\..\Program Files\DigitalPersona\One Touch SDK\.NET\Bin\DPFPCtlXTypeLibNET.dll" />
