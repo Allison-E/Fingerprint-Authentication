@@ -14,7 +14,7 @@ namespace Fingerprint_Authentication
     public partial class MainWindow
     {
         private Verification verifier;
-        private Dictionary<Template, string> deserialisedTemplatesFromDB;
+        private Dictionary<Template, int> deserialisedTemplatesFromDB;
         private const int INT_N = 214748;
         private Task deserialiseFingerprintsFromDBTask;
 
@@ -34,30 +34,29 @@ namespace Fingerprint_Authentication
         private async void startVerifying()
         {
             initialiseVerifier();
-            deserialisedTemplatesFromDB = new Dictionary<DPFP.Template, string>();
+            deserialisedTemplatesFromDB = new Dictionary<Template, int>();
             WriteStatus("Put your finger on the scanner.");
-            Dictionary<byte[], string> fingerprintsFromDB = await fingerprintsFromDBTask;
+            Dictionary<byte[], int> fingerprintsFromDB = await fingerprintsFromDBTask;
             deserialiseFingerprintsFromDBTask = deserialiseFingerprintsFromDBAsync(fingerprintsFromDB);
             deserialiseFingerprintsFromDBTask.Start();
         }
 
-        private Task deserialiseFingerprintsFromDBAsync(Dictionary<byte[], string> serialisedFingerprints)
+        private Task deserialiseFingerprintsFromDBAsync(Dictionary<byte[], int> serialisedFingerprints)
         {
-            Task task1 = Task.Run(() =>
+            return Task.Run(() =>
             {
                 // Takes the first pair, deserialises the serialised fingerprint into a Template, and saves the 
                 // new Template and ID in a dictionary.
                 for (int i = 0; i < serialisedFingerprints.Count; i++)
                 {
-                    KeyValuePair<byte[], string> pair = serialisedFingerprints.First();
-                    Template temp = new DPFP.Template();
+                    KeyValuePair<byte[], int> pair = serialisedFingerprints.First();
+                    Template temp = new Template();
                     temp.DeSerialize(pair.Key);
 
                     deserialisedTemplatesFromDB.Add(temp, pair.Value);
                     serialisedFingerprints.Remove(pair.Key);
                 }
             });
-            return task1;
         }
 
         private void processVerification(Sample sample)
@@ -67,8 +66,8 @@ namespace Fingerprint_Authentication
             if (feature != null)
             {
                 WriteGoodStatus("The fingerprint feature set was created.");
-                string id = findIDOfMatchingFingerprintAsync(feature).Result;
-                if (id != null || id != "")
+                int id = findIDOfMatchingFingerprintAsync(feature).Result;
+                if (id >= 0)
                 {
                     WriteGoodStatus("Match found");
                     Application.Current.Shutdown(Convert.ToInt32(id));
@@ -81,19 +80,19 @@ namespace Fingerprint_Authentication
             }
         }
 
-        private async Task<string> findIDOfMatchingFingerprintAsync(FeatureSet feature)
+        private async Task<int> findIDOfMatchingFingerprintAsync(FeatureSet feature)
         {
-            string resultId = null;
+            int resultId = -100;    // I used a negative number because the IDs would always be positive
             await deserialiseFingerprintsFromDBTask;
 
-            Task<string> task = Task.Run(() =>
+            Task<int> task = Task.Run(() =>
             {
                 Verification.Result result;
 
                 for (int i = 0; i < deserialisedTemplatesFromDB.Count; i++)
                 {
                     result = null;
-                    KeyValuePair<Template, string> pair = deserialisedTemplatesFromDB.First();
+                    KeyValuePair<Template, int> pair = deserialisedTemplatesFromDB.First();
                     verifier.Verify(feature, pair.Key, ref result);
                     deserialisedTemplatesFromDB.Remove(pair.Key);
 

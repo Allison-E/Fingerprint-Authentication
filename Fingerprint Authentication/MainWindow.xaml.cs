@@ -33,7 +33,7 @@ namespace Fingerprint_Authentication
         string _functionToExecute;
         private DB.DBHandler db;
         private Dictionary<string, string> args;
-        private Task<Dictionary<byte[], string>> fingerprintsFromDBTask;
+        private Task<Dictionary<byte[], int>> fingerprintsFromDBTask;
 
         /// <summary>
         /// The window for either verification or enrollment of fingerprints
@@ -63,15 +63,13 @@ namespace Fingerprint_Authentication
                 switch (args["functionToExecute"].ToLower().Trim())
                 {
                     case "enroll":
-                        db.SetID(args["ID"]);
+                        db.SetID(Convert.ToInt32(args["ID"]));
                         startEnrolling();
                         break;
                     case "verify":
                         fingerprintsFromDBTask = db.GetFingerprintsFromDBAsync();
                         fingerprintsFromDBTask.Start();
                         startVerifying();
-                        break;
-                    default:
                         break;
                 }
            }
