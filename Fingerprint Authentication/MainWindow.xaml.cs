@@ -135,7 +135,7 @@ namespace Fingerprint_Authentication
             WriteStatus("The fingerprint sample was captured.");
             DisplayFingerprintImage(sample);
 
-            switch (_functionToExecute.ToLower().Trim())
+            switch (args["functionToExecute"].ToLower().Trim())
             {
                 case "enroll":
                     processEnrollmentAndSaveToDB(sample);

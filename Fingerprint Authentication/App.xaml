@@ -1,9 +1,8 @@
-﻿<Application x:Class="Fingerprint_Authentication.App"
+﻿<Application 
+             x:Class="Fingerprint_Authentication.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Fingerprint_Authentication"
              Startup="Application_start">
-    <Application.Resources>
-        
-    </Application.Resources>
+  
 </Application>

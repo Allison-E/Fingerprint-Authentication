@@ -64,8 +64,9 @@ namespace Fingerprint_Authentication.DB
             bool isDone;
             command.CommandText = @"INSERT INTO [[Put your database's name]] (id, [[Put the name of your fingerprint column]])
                                     VALUES (" + id + ", fingerprintParameter)";
-            SqlParameter fingerprintParameter = new SqlParameter("fingerprintParameter", serialisedFingerprint);
-            fingerprintParameter.SqlDbType = System.Data.SqlDbType.VarBinary;
+            SQLiteParameter fingerprintParameter = new SQLiteParameter("fingerprintParameter", serialisedFingerprint);
+            fingerprintParameter.DbType = DbType.Binary;
+            //fingerprintParameter.DbType = DbType.Binary;
             command.Parameters.Add(fingerprintParameter);
 
             return Task.Run(async () =>
@@ -114,7 +115,7 @@ namespace Fingerprint_Authentication.DB
                 try
                 {
                     connection.Open();
-                    using (SqLiteDataReader reader = command.ExecuteReader())
+                    using (SQLiteDataReader reader = command.ExecuteReader())
                     {
                         while (reader.Read())
                         {
@@ -152,10 +153,10 @@ namespace Fingerprint_Authentication.DB
             connectionStringBuilder = new SQLiteConnectionStringBuilder();
             connection = new SQLiteConnection();
 
-            connectionStringBuilder.DataSource = "";    // Put in the name or network address of the instance of your SQL server here.
+            connectionStringBuilder.DataSource = @"C:\Users\MVT1\Desktop\finalyearproject\db.sqlite3";    // Put in the name or network address of the instance of your SQL server here.
             //connectionStringBuilder. = ""; // Put in the name of the DB here.
             connectionStringBuilder.Password = "";  // Put in the password of your DB here (if there's one).
-            connectionStringBuilder.UserID = "";    // Put in the admin ID here.
+            //connectionStringBuilder.UserID = "CU11596";    // Put in the admin ID here.
 
             connection.ConnectionString = connectionStringBuilder.ConnectionString;
             command.Connection = connection;
