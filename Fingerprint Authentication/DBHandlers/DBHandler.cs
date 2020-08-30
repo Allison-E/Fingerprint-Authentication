@@ -64,8 +64,8 @@ namespace Fingerprint_Authentication.DB
             bool isDone;
             command.CommandText = @"INSERT INTO [[Put your database's name]] (id, [[Put the name of your fingerprint column]])
                                     VALUES (" + id + ", fingerprintParameter)";
-            SqlParameter fingerprintParameter = new SqlParameter("fingerprintParameter", serialisedFingerprint);
-            fingerprintParameter.SqlDbType = System.Data.SqlDbType.VarBinary;
+            SQLiteParameter fingerprintParameter = new SQLiteParameter("fingerprintParameter", serialisedFingerprint);
+            fingerprintParameter.DbType = DbType.Binary;
             command.Parameters.Add(fingerprintParameter);
 
             return Task.Run(async () =>
@@ -114,7 +114,7 @@ namespace Fingerprint_Authentication.DB
                 try
                 {
                     connection.Open();
-                    using (SqLiteDataReader reader = command.ExecuteReader())
+                    using (SQLiteDataReader reader = command.ExecuteReader())
                     {
                         while (reader.Read())
                         {
