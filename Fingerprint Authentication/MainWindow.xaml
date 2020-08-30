@@ -5,7 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Fingerprint_Authentication"
         mc:Ignorable="d"
-        Title="MainWindow" Height="300" Width="600" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="MainWindow" Height="300" Width="600" 
+        Loaded="Window_Loaded" Closing="Window_Closing" 
+        ResizeMode="CanMinimize">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="270"/>
@@ -16,7 +18,9 @@
             <Label Content="Prompt:" Margin="10 0" Padding="0 5" Foreground="#FF3C3C3C"/>
             <TextBlock x:Name="promptText" Margin="10 0"/>
             <Label Content="Status:" Margin="10 0 10 0" Padding="0 5" Foreground="#FF3C3C3C"/>
-            <TextBlock x:Name="statusText" VerticalAlignment="Stretch" Margin="10 0" Height="182" ScrollViewer.CanContentScroll="True"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="10 0">
+                <TextBlock x:Name="statusText" VerticalAlignment="Stretch" Margin="0" Height="182" ScrollViewer.CanContentScroll="True"/>
+            </ScrollViewer>
         </StackPanel>
     </Grid>
 </Window>
