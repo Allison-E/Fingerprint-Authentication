@@ -40,7 +40,7 @@ namespace Fingerprint_Authentication
 
 			if (feature != null)
 			{
-				WriteGoodStatus("The fingerprint feature set was created.");
+				WriteGoodStatus("\r\nThe fingerprint feature set was created.");
 				enroller.AddFeatures(feature);
 				noOfScansLeft--;
 			}
