@@ -17,6 +17,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using DPFP.Processing;
 using DPFP.Capture;
+using System.Windows.Interop;
 
 namespace Fingerprint_Authentication
 {
@@ -44,6 +45,7 @@ namespace Fingerprint_Authentication
             fingerprintImage = new Image();
             imageBox.DataContext = fingerprintImage;
             Binding bind = new Binding("Picture");
+            bind.Mode = BindingMode.OneWay;
             bind.Source = fingerprintImage;
             imageBox.SetBinding(System.Windows.Controls.Image.SourceProperty, bind);
             db = DB.DBHandler.Instance;
@@ -94,7 +96,7 @@ namespace Fingerprint_Authentication
 
         private void DisplayFingerprintImage(DPFP.Sample sample)
         {
-            fingerprintImage.Picture = ConvertSampleToBitmap(sample);
+            fingerprintImage.Picture = ConvertSampleToBitmapImage(sample);
         }
 
         private void StartCapturing()
@@ -135,7 +137,7 @@ namespace Fingerprint_Authentication
             WriteStatus("The fingerprint sample was captured.");
             DisplayFingerprintImage(sample);
 
-            switch (_functionToExecute.ToLower().Trim())
+            switch (args["functionToExecute"].ToLower().Trim())
             {
                 case "enroll":
                     processEnrollmentAndSaveToDB(sample);
@@ -266,7 +268,7 @@ namespace Fingerprint_Authentication
         }
 
         #region Utilities
-        public Bitmap ConvertSampleToBitmap(DPFP.Sample sample)
+        public BitmapImage ConvertSampleToBitmapImage(DPFP.Sample sample)
         {
             int height = 0;
             int width = 0;
@@ -278,7 +280,31 @@ namespace Fingerprint_Authentication
             DPFP.Capture.SampleConversion Convertor = new DPFP.Capture.SampleConversion();  // Create a sample convertor.
             Bitmap bitmap = new Bitmap(width, height);                                                          
             Convertor.ConvertToPicture(sample, ref bitmap);                                
-            return bitmap;
+            return Bitmap2BitmapImage(bitmap);
+        }
+
+        // Safely copied from StackOverFlow ;)
+        [System.Runtime.InteropServices.DllImport("gdi32.dll")]
+        public static extern bool DeleteObject(IntPtr hObject);
+        private BitmapImage Bitmap2BitmapImage(Bitmap bitmap)
+        {
+            IntPtr hBitmap = bitmap.GetHbitmap();
+            BitmapImage retval;
+
+            try
+            {
+                retval = (BitmapImage)Imaging.CreateBitmapSourceFromHBitmap(
+                             hBitmap,
+                             IntPtr.Zero,
+                             Int32Rect.Empty,
+                             BitmapSizeOptions.FromEmptyOptions());
+            }
+            finally
+            {
+                DeleteObject(hBitmap);
+            }
+
+            return retval;
         }
 
         public void WriteStatus(string status)
