@@ -13,11 +13,11 @@ namespace Fingerprint_Authentication
 {
     public class Image : INotifyPropertyChanged
     {
-        private Bitmap picture;
+        private BitmapImage picture;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public Bitmap Picture
+        public BitmapImage Picture
         {
             get
             {
