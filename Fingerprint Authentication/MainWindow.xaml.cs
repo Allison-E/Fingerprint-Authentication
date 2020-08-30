@@ -18,6 +18,7 @@ using System.Windows.Shapes;
 using DPFP.Processing;
 using DPFP.Capture;
 using System.Windows.Interop;
+using System.IO;
 
 namespace Fingerprint_Authentication
 {
@@ -277,34 +278,28 @@ namespace Fingerprint_Authentication
                 height = (int)imageBox.Height;
                 width = (int)imageBox.Width;
             });
-            DPFP.Capture.SampleConversion Convertor = new DPFP.Capture.SampleConversion();  // Create a sample convertor.
+            DPFP.Capture.SampleConversion Convertor = new DPFP.Capture.SampleConversion();  // Create a sample converter.
             Bitmap bitmap = new Bitmap(width, height);                                                          
             Convertor.ConvertToPicture(sample, ref bitmap);                                
-            return Bitmap2BitmapImage(bitmap);
+            return bitmapToBitmapImage(bitmap);
         }
 
-        // Safely copied from StackOverFlow ;)
-        [System.Runtime.InteropServices.DllImport("gdi32.dll")]
-        public static extern bool DeleteObject(IntPtr hObject);
-        private BitmapImage Bitmap2BitmapImage(Bitmap bitmap)
+        private BitmapImage bitmapToBitmapImage(Bitmap bitmap)
         {
-            IntPtr hBitmap = bitmap.GetHbitmap();
-            BitmapImage retval;
-
-            try
+            using (var memory = new MemoryStream())
             {
-                retval = (BitmapImage)Imaging.CreateBitmapSourceFromHBitmap(
-                             hBitmap,
-                             IntPtr.Zero,
-                             Int32Rect.Empty,
-                             BitmapSizeOptions.FromEmptyOptions());
-            }
-            finally
-            {
-                DeleteObject(hBitmap);
-            }
+                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Png);
+                memory.Position = 0;
 
-            return retval;
+                var bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = memory;
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.EndInit();
+                bitmapImage.Freeze();
+
+                return bitmapImage;
+            }
         }
 
         public void WriteStatus(string status)
@@ -316,9 +311,9 @@ namespace Fingerprint_Authentication
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                statusText.Foreground = System.Windows.Media.Brushes.Red;
-                statusText.Text += "\r\n" + errorMessage;
-                statusText.Foreground = System.Windows.Media.Brushes.Black;
+                Run run = new Run("\r\n" + errorMessage);
+                run.Foreground = System.Windows.Media.Brushes.Red;
+                statusText.Inlines.Add(run);
             });
         }
 
@@ -326,9 +321,9 @@ namespace Fingerprint_Authentication
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                statusText.Foreground = System.Windows.Media.Brushes.Green;
-                statusText.Text += "\r\n" + goodMessage;
-                statusText.Foreground = System.Windows.Media.Brushes.Black;
+                Run run = new Run("\r\n" + goodMessage);
+                run.Foreground = System.Windows.Media.Brushes.Green;
+                statusText.Inlines.Add(run);
             });
         }
 
