@@ -311,7 +311,7 @@ namespace Fingerprint_Authentication
         {
             Application.Current?.Dispatcher.Invoke(() =>
             {
-                Run run = new Run("\r\n" + errorMessage);
+                Run run = new Run(errorMessage + "\r\n");
                 run.Foreground = System.Windows.Media.Brushes.Red;
                 statusText.Inlines.Add(run);
             });
