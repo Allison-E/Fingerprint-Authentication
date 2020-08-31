@@ -6,6 +6,7 @@ using System.Text;
 using DPFP.Processing;
 using System.Threading.Tasks;
 using DPFP;
+using System.Windows;
 
 namespace Fingerprint_Authentication
 {
@@ -34,7 +35,7 @@ namespace Fingerprint_Authentication
 			WriteStatus($"Scans left: {noOfScansLeft}.");
 			WriteStatus("Put your finger on the scanner.");
 		}
-        
+		
 		private void createFeatureAndAddItToTheEnroller(Sample sample)
 		{
 			FeatureSet feature = ExtractFeatures(sample, DataPurpose.Enrollment);
@@ -62,30 +63,28 @@ namespace Fingerprint_Authentication
 				case Enrollment.Status.Ready:   // Report success and stop capturing
 					byte[] byteArray = null;
 					StopCapturing();
-					// Todo: Add call to save the enrolled fingerprint
 					enroller.Template.Serialize(ref byteArray);
 
 					bool storageWasSuccessful = false;
 					try
 					{
-						var store = db.StoreFingerprintInDBAsync(byteArray);
-						storageWasSuccessful = await store;
+						storageWasSuccessful = await db.StoreFingerprintInDBAsync(byteArray); ;
 					}
 					catch (DB.CouldNotStoreFingerprintInDBException)
 					{
-						System.Windows.MessageBox.Show("Fingerprint enrollment was unsuccessful!", "Sorry!", System.Windows.MessageBoxButton.OK);
-						System.Windows.Application.Current?.Shutdown();
+						MessageBox.Show("Fingerprint enrollment was unsuccessful. Please try again", "Something bad happened :(", MessageBoxButton.OK);
+						Application.Current?.Shutdown();
 					}
 
 					if (storageWasSuccessful)
 					{
-						System.Windows.MessageBox.Show("Fingerprint enrollment was successful!", "Success!", System.Windows.MessageBoxButton.OK);
-						System.Windows.Application.Current?.Shutdown();
+						MessageBox.Show("Fingerprint enrollment was successful!", "Success!", MessageBoxButton.OK);
+						Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
 					}
 					else
 					{
-						System.Windows.MessageBox.Show("Fingerprint enrollment was unsuccessful!", "Sorry!", System.Windows.MessageBoxButton.OK);
-						System.Windows.Application.Current?.Shutdown();
+						MessageBox.Show("Fingerprint enrollment was unsuccessful. Please try again.", "Something bad happened :(", MessageBoxButton.OK);
+						Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
 					}
 					break;
 

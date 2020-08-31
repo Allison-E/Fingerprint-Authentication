@@ -60,7 +60,7 @@ namespace Fingerprint_Authentication.DB
         /// <returns>A <c>Task<bool></c> which tells if the storage was successful or not.</returns>
         public Task<bool> StoreFingerprintInDBAsync(byte[] serialisedFingerprint)
         {
-            bool isDone;
+            bool wasSuccessful;
             command.CommandText = @"INSERT INTO eCapture_capture (user_id, finger_print)
                                     VALUES (" + user_id + ", @fingerprintParameter)";
             SQLiteParameter fingerprintParameter = new SQLiteParameter("@fingerprintParameter", serialisedFingerprint);
@@ -69,7 +69,7 @@ namespace Fingerprint_Authentication.DB
 
             return Task.Run(async () =>
             {
-                isDone = false;
+                wasSuccessful = false;
 
                 try
                 {
@@ -80,7 +80,7 @@ namespace Fingerprint_Authentication.DB
                         // Cross-checks to make sure the fingerprint was saved.
                         bool checkResult = await checkIfStorageOfFingerprintWorkedAsync(serialisedFingerprint);
                         if (checkResult)
-                            isDone = true;
+                            wasSuccessful = true;
                     }
                     catch (CouldNotFindSavedFingerprintsException)
                     {
@@ -97,7 +97,7 @@ namespace Fingerprint_Authentication.DB
                     if (connection.State == ConnectionState.Open)
                         connection.Close();
                     }
-                return isDone;
+                return wasSuccessful;
 
             });
         }
@@ -140,6 +140,58 @@ namespace Fingerprint_Authentication.DB
             });
         }
 
+        public Task<bool> MarkPresentInAttendance(int userID, int eventID)
+        {
+            bool wasSuccessful;
+            command.CommandText = @"INSERT INTO eCapture_attendance (present, excused, event_id, user_id)
+                                    VALUES (@present, @excused, @event_id, @user_id)";
+            SQLiteParameter presentParam = new SQLiteParameter("@present", true);
+            presentParam.DbType = DbType.Boolean;
+            SQLiteParameter excusedParam = new SQLiteParameter("@excused", false);
+            presentParam.DbType = DbType.Boolean;
+            SQLiteParameter event_idParam = new SQLiteParameter("@event_id", eventID);
+            presentParam.DbType = DbType.Int32;
+            SQLiteParameter user_idParam = new SQLiteParameter("@user_id", userID);
+            presentParam.DbType = DbType.Int32;
+            command.Parameters.Add(presentParam);
+            command.Parameters.Add(excusedParam);
+            command.Parameters.Add(event_idParam);
+            command.Parameters.Add(user_idParam);
+
+            return Task.Run(async () =>
+            {
+                wasSuccessful = false;
+
+                try
+                {
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                    try
+                    {
+                        // Cross-checks to make sure the attendance was registered.
+                        bool checkResult = await checkIfAttedanceWasRegisteredAsync(userID, eventID);
+                        if (checkResult)
+                            wasSuccessful = true;
+                    }
+                    catch (CouldNotFindMarkedAttendance)
+                    {
+                        throw new CouldNotFindMarkedAttendance("Crosscheck failed. Could not find marked attendance in DB after saving it.");
+                    }
+                    connection.Close();
+                }
+                catch
+                {
+                    throw new CouldNotMarkAttendanceException();
+                }
+                finally
+                {
+                    if (connection.State == ConnectionState.Open)
+                        connection.Close();
+                }
+                return wasSuccessful;
+            });
+        }
+
         private int readARow(IDataRecord record, out byte[] serialisedFingerprint)
         {
             serialisedFingerprint = (byte[])record[1];
@@ -177,6 +229,28 @@ namespace Fingerprint_Authentication.DB
                 return originalByte.SequenceEqual(byteFromDB);
             });
         }
+
+        private Task<bool> checkIfAttedanceWasRegisteredAsync(int userID, int eventID)
+        {
+            command.CommandText = @"SELECT present
+                                    FROM eCapture_attendance 
+                                    WHERE user_id = " + userID + " AND event_id = " + eventID;
+            bool presentReturned;
+
+            return Task.Run(() =>
+            {
+                try
+                {
+                    presentReturned = Convert.ToBoolean(command.ExecuteScalar());
+                }
+                catch
+                {
+                    throw new CouldNotFindMarkedAttendance();
+                }
+
+                return presentReturned;
+            });
+        }
     }
 
     [Serializable]
@@ -189,8 +263,7 @@ namespace Fingerprint_Authentication.DB
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
-
-
+    
     [Serializable]
     public class CouldNotFindSavedFingerprintsException : Exception
     {
@@ -198,6 +271,28 @@ namespace Fingerprint_Authentication.DB
         public CouldNotFindSavedFingerprintsException(string message) : base(message) { }
         public CouldNotFindSavedFingerprintsException(string message, Exception inner) : base(message, inner) { }
         protected CouldNotFindSavedFingerprintsException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+    }
+    
+    [Serializable]
+    public class CouldNotMarkAttendanceException : Exception
+    {
+        public CouldNotMarkAttendanceException() { }
+        public CouldNotMarkAttendanceException(string message) : base(message) { }
+        public CouldNotMarkAttendanceException(string message, Exception inner) : base(message, inner) { }
+        protected CouldNotMarkAttendanceException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+    }
+
+    [Serializable]
+    public class CouldNotFindMarkedAttendance : Exception
+    {
+        public CouldNotFindMarkedAttendance() { }
+        public CouldNotFindMarkedAttendance(string message) : base(message) { }
+        public CouldNotFindMarkedAttendance(string message, Exception inner) : base(message, inner) { }
+        protected CouldNotFindMarkedAttendance(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
