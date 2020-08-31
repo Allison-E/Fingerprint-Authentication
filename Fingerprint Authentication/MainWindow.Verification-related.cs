@@ -38,7 +38,6 @@ namespace Fingerprint_Authentication
             WriteStatus("Put your finger on the scanner.");
             Dictionary<byte[], int> fingerprintsFromDB = await fingerprintsFromDBTask;
             deserialiseFingerprintsFromDBTask = deserialiseFingerprintsFromDBAsync(fingerprintsFromDB);
-            deserialiseFingerprintsFromDBTask.Start();
         }
 
         private Task deserialiseFingerprintsFromDBAsync(Dictionary<byte[], int> serialisedFingerprints)
