@@ -14,13 +14,13 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Image x:Name="imageBox" HorizontalAlignment="Left" Margin="10" VerticalAlignment="Stretch" Height="250" Grid.Column="0" Width="{Binding Height, RelativeSource={RelativeSource Self}}"/>
-        <StackPanel Orientation="Vertical" Grid.Column="1" Margin="0 10">
-            <Label Content="Prompt" Margin="10 0" Padding="0 5" Foreground="#FF6C6C6C" FontSize="13"/>
-            <TextBlock x:Name="promptText" Margin="10 0"/>
-            <Label Content="Status" Margin="10 0" Padding="0 5" Foreground="#FF6C6C6C" FontSize="13"/>
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="10 0" Padding="0">
-                <TextBlock x:Name="statusText" VerticalAlignment="Stretch" Margin="0" Height="182" Padding="0"/>
+        <Grid Grid.Column="1" Margin="0 10">
+            <Label Content="Prompt:" Margin="10 0" Padding="0" Foreground="#FF6C6C6C" FontSize="13"/>
+            <TextBlock x:Name="promptText" Margin="10 17 10 0" VerticalAlignment="Top"/>
+            <Label Content="Status:" Margin="10 33 10 0"  VerticalAlignment="Top" Padding="0 10 0 0" Foreground="#FF6C6C6C" FontSize="13"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="10 60 10 0" Padding="0">
+                <TextBlock x:Name="statusText" Margin="0" Padding="0"/>
             </ScrollViewer>
-        </StackPanel>
+        </Grid>
     </Grid>
 </Window>

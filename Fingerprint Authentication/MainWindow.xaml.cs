@@ -30,9 +30,8 @@ namespace Fingerprint_Authentication
         private Capture Capturer;
         private Image fingerprintImage;
         private uint noOfScansLeft;
-        string _functionToExecute;
         private DB.DBHandler db;
-        private Dictionary<string, string> args;
+        private readonly Dictionary<string, string> args;
         private Task<Dictionary<byte[], int>> fingerprintsFromDBTask;
 
         /// <summary>
@@ -45,10 +44,10 @@ namespace Fingerprint_Authentication
             InitializeComponent();
             fingerprintImage = new Image();
             imageBox.DataContext = fingerprintImage;
-            Binding bind = new Binding("Picture");
-            bind.Mode = BindingMode.OneWay;
-            bind.Source = fingerprintImage;
-            imageBox.SetBinding(System.Windows.Controls.Image.SourceProperty, bind);
+            Binding imageBind = new Binding("Picture");
+            imageBind.Mode = BindingMode.OneWay;
+            imageBind.Source = fingerprintImage;
+            imageBox.SetBinding(System.Windows.Controls.Image.SourceProperty, imageBind);
             db = DB.DBHandler.Instance;
 
             args = arguments;
@@ -56,19 +55,20 @@ namespace Fingerprint_Authentication
             if (args == null || args.Count == 0)
             {
                 MessageBox.Show("Argument is null. Please pass an argument to this application.", "Null argument error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
-                Application.Current.Shutdown();
+                Application.Current?.Shutdown();
             }
             else
             {
                 switch (args["functionToExecute"].ToLower().Trim())
                 {
                     case "enroll":
-                        db.SetID(Convert.ToInt32(args["ID"]));
+                        Title = "Fingerprint Enrollment";
+                        db.SetID(Convert.ToInt32(args["userID"]));
                         startEnrolling();
                         break;
                     case "verify":
+                        Title = "Fingerprint Verification";
                         fingerprintsFromDBTask = db.GetFingerprintsFromDBAsync();
-                        fingerprintsFromDBTask.Start();
                         startVerifying();
                         break;
                 }
@@ -161,12 +161,14 @@ namespace Fingerprint_Authentication
 
         public void OnReaderConnect(object Capture, string ReaderSerialNumber)
         {
+            SetPrompt("Using the fingerprint reader, scan your fingerprint.");
             WriteStatus("The fingerprint reader was connected.");
         }
 
         public void OnReaderDisconnect(object Capture, string ReaderSerialNumber)
         {
-            WriteStatus("The fingerprint reader was disconnected.");
+            SetPrompt("Please connect your fingerprint scanner.");
+            WriteErrorStatus("The fingerprint reader was disconnected.");
         }
 
         public void OnSampleQuality(object Capture, string ReaderSerialNumber, DPFP.Capture.CaptureFeedback CaptureFeedback)
@@ -271,7 +273,7 @@ namespace Fingerprint_Authentication
         {
             int height = 0;
             int width = 0;
-            Application.Current.Dispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.Invoke(() =>
             {
                 height = (int)imageBox.Height;
                 width = (int)imageBox.Width;
@@ -300,14 +302,14 @@ namespace Fingerprint_Authentication
             }
         }
 
-        public void WriteStatus(string status)
+        public void WriteStatus(string statusMessage)
         {
-            Application.Current.Dispatcher.Invoke(() => statusText.Text += "\r\n" + status);
+            Application.Current?.Dispatcher.Invoke(() => statusText.Inlines.Add(statusMessage + "\r\n"));
         }
 
         public void WriteErrorStatus(string errorMessage)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.Invoke(() =>
             {
                 Run run = new Run("\r\n" + errorMessage);
                 run.Foreground = System.Windows.Media.Brushes.Red;
@@ -317,9 +319,9 @@ namespace Fingerprint_Authentication
 
         public void WriteGoodStatus(string goodMessage)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.Invoke(() =>
             {
-                Run run = new Run("\r\n" + goodMessage);
+                Run run = new Run(goodMessage + "\r\n");
                 run.Foreground = System.Windows.Media.Brushes.Green;
                 statusText.Inlines.Add(run);
             });
@@ -327,7 +329,7 @@ namespace Fingerprint_Authentication
 
         public void SetPrompt(string prompt)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.Invoke(() =>
             {
                 promptText.Text = prompt;
             });

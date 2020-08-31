@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Timers;
 using System.Text;
 using DPFP.Processing;
 using System.Threading.Tasks;
@@ -30,10 +31,10 @@ namespace Fingerprint_Authentication
 		{
 			initialiseEnroller();
 			noOfScansLeft = enroller.FeaturesNeeded;
-			WriteStatus("Put your finger on the scanner.");
 			WriteStatus($"Scans left: {noOfScansLeft}.");
+			WriteStatus("Put your finger on the scanner.");
 		}
-
+        
 		private void createFeatureAndAddItToTheEnroller(Sample sample)
 		{
 			FeatureSet feature = ExtractFeatures(sample, DataPurpose.Enrollment);
@@ -47,7 +48,7 @@ namespace Fingerprint_Authentication
 
 			if (noOfScansLeft != 0)
 			{
-				WriteStatus($"Scans left: {noOfScansLeft}.");
+				WriteStatus($"\nScans left: {noOfScansLeft}.");
 				WriteStatus("Put your finger on the fingerprint scanner.");
 			}
 		}
@@ -73,18 +74,18 @@ namespace Fingerprint_Authentication
 					catch (DB.CouldNotStoreFingerprintInDBException)
 					{
 						System.Windows.MessageBox.Show("Fingerprint enrollment was unsuccessful!", "Sorry!", System.Windows.MessageBoxButton.OK);
-						System.Windows.Application.Current.Shutdown();
+						System.Windows.Application.Current?.Shutdown();
 					}
 
 					if (storageWasSuccessful)
 					{
 						System.Windows.MessageBox.Show("Fingerprint enrollment was successful!", "Success!", System.Windows.MessageBoxButton.OK);
-						System.Windows.Application.Current.Shutdown();
+						System.Windows.Application.Current?.Shutdown();
 					}
 					else
 					{
 						System.Windows.MessageBox.Show("Fingerprint enrollment was unsuccessful!", "Sorry!", System.Windows.MessageBoxButton.OK);
-						System.Windows.Application.Current.Shutdown();
+						System.Windows.Application.Current?.Shutdown();
 					}
 					break;
 
