@@ -84,7 +84,7 @@ namespace Fingerprint_Authentication
                     if (storageWasSuccessful)
                     {
                         MessageBox.Show("Attendance marking was successful!", "You're in!", MessageBoxButton.OK);
-                        Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown(id));
+                        Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
                     }
                     else
                     {
@@ -96,7 +96,7 @@ namespace Fingerprint_Authentication
                 {
                     WriteErrorStatus("Match not found");
                     MessageBox.Show("Sorry, we could not find your fingerprint. Please try again.", "Something bad happened :(", MessageBoxButton.OK);
-                    Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown(id));
+                    Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
                 }
             }
         }
