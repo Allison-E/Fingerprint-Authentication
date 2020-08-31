@@ -74,26 +74,26 @@ namespace Fingerprint_Authentication
                     try
                     {
                         storageWasSuccessful = await db.MarkPresentInAttendance(Convert.ToInt32(args["userID"]), Convert.ToInt32(args["eventID"]));
-                    }
+                    }   
                     catch (DB.CouldNotMarkAttendanceException)
-                    {
+                    {   
                         MessageBox.Show("Attendance marking was unsuccessful. Please try again.", "Uh oh :(", MessageBoxButton.OK);
                         Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
                     }
 
                     if (storageWasSuccessful)
-                    {
+                    {   
                         MessageBox.Show("Attendance marking was successful!", "You're in!", MessageBoxButton.OK);
                         Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown(id));
                     }
                     else
-                    {
+                    {   
                         MessageBox.Show("Attendance marking was unsuccessful. Please try again.", "Uh oh :(", MessageBoxButton.OK);
                         Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
                     }
                 }
                 else
-                {
+                {   
                     WriteErrorStatus("Match not found");
                     MessageBox.Show("Sorry, we could not find your fingerprint. Please try again.", "Something bad happened :(", MessageBoxButton.OK);
                     Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown(id));
