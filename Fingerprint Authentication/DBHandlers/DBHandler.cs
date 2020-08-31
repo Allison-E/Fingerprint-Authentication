@@ -82,9 +82,9 @@ namespace Fingerprint_Authentication.DB
                         if (checkResult)
                             isDone = true;
                     }
-                    catch (CouldNotFindSavedFingerprintException)
+                    catch (CouldNotFindSavedFingerprintsException)
                     {
-                        throw new CouldNotStoreFingerprintInDBException();
+                        throw new CouldNotStoreFingerprintInDBException("Crosscheck failed. Could not find record in DB after saving it.");
                     }
                     connection.Close();
                 }
@@ -126,7 +126,8 @@ namespace Fingerprint_Authentication.DB
                 }
                 catch
                 {
-                    throw new CouldNotFindSavedFingerprintException();
+                    //throw new CouldNotFindSavedFingerprintsException();
+
                 }
                 finally
                 {
@@ -142,7 +143,7 @@ namespace Fingerprint_Authentication.DB
         private int readARow(IDataRecord record, out byte[] serialisedFingerprint)
         {
             serialisedFingerprint = (byte[])record[1];
-            return (int)record[0];
+            return Convert.ToInt32(record[0]);
         }
 
         private void initialiseSqlStuff()
@@ -150,21 +151,9 @@ namespace Fingerprint_Authentication.DB
             command = new SQLiteCommand();
             connectionStringBuilder = new SQLiteConnectionStringBuilder();
             connection = new SQLiteConnection();
-
             connectionStringBuilder.DataSource = @"C:\Users\MVT1\Desktop\finalyearproject\db.sqlite3";    // Put in the name or network address of the instance of your SQL server here.
-            connectionStringBuilder.Password = "";  // Put in the password of your DB here (if there's one).
-
             connection.ConnectionString = connectionStringBuilder.ConnectionString;
             command.Connection = connection;
-        }
-
-        [DllImport("wininet.dll")]
-        private extern static bool InternetGetConnectedState(out int Description, int ReservedValue);
-
-        public static bool IsConnectedToTheInternet()
-        {
-            int description;
-            return InternetGetConnectedState(out description, 0);
         }
 
         private Task<bool> checkIfStorageOfFingerprintWorkedAsync(byte[] originalByte)
@@ -182,7 +171,7 @@ namespace Fingerprint_Authentication.DB
                 }
                 catch
                 {
-                    throw new CouldNotFindSavedFingerprintException();
+                    throw new CouldNotFindSavedFingerprintsException();
                 }
 
                 return originalByte.SequenceEqual(byteFromDB);
@@ -203,12 +192,12 @@ namespace Fingerprint_Authentication.DB
 
 
     [Serializable]
-    public class CouldNotFindSavedFingerprintException : Exception
+    public class CouldNotFindSavedFingerprintsException : Exception
     {
-        public CouldNotFindSavedFingerprintException() { }
-        public CouldNotFindSavedFingerprintException(string message) : base(message) { }
-        public CouldNotFindSavedFingerprintException(string message, Exception inner) : base(message, inner) { }
-        protected CouldNotFindSavedFingerprintException(
+        public CouldNotFindSavedFingerprintsException() { }
+        public CouldNotFindSavedFingerprintsException(string message) : base(message) { }
+        public CouldNotFindSavedFingerprintsException(string message, Exception inner) : base(message, inner) { }
+        protected CouldNotFindSavedFingerprintsException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
