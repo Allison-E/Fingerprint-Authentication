@@ -69,7 +69,7 @@ namespace Fingerprint_Authentication
                 if (id >= 0)
                 {
                     WriteGoodStatus("Match found");
-                    Application.Current?.Dispatcher.Invoke(() => (Convert.ToInt32(id));
+                    Application.Current?.Shutdown(Convert.ToInt32(id));
                 }
                 else
                 {
