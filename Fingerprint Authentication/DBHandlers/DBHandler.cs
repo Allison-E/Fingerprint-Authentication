@@ -11,7 +11,7 @@ namespace Fingerprint_Authentication.DB
     public class DBHandler
     {
         static DBHandler _instance;
-        int id;
+        int user_id;
         int noOfChangesAllowedForTheId;
         SQLiteCommand command;
         SQLiteConnectionStringBuilder connectionStringBuilder;
@@ -48,7 +48,7 @@ namespace Fingerprint_Authentication.DB
         {
             if (noOfChangesAllowedForTheId != 0)
             {
-                id = Id;
+                user_id = Id;
                 noOfChangesAllowedForTheId--;
             }
         }
@@ -61,8 +61,8 @@ namespace Fingerprint_Authentication.DB
         public Task<bool> StoreFingerprintInDBAsync(byte[] serialisedFingerprint)
         {
             bool isDone;
-            command.CommandText = @"INSERT INTO eCapture_staff (id, finger_print)
-                                    VALUES (" + id + ", @fingerprintParameter)";
+            command.CommandText = @"INSERT INTO eCapture_capture (user_id, finger_print)
+                                    VALUES (" + user_id + ", @fingerprintParameter)";
             SQLiteParameter fingerprintParameter = new SQLiteParameter("@fingerprintParameter", serialisedFingerprint);
             fingerprintParameter.DbType = DbType.Binary;
             command.Parameters.Add(fingerprintParameter);
@@ -104,8 +104,8 @@ namespace Fingerprint_Authentication.DB
 
         public Task<Dictionary<byte[], int>> GetFingerprintsFromDBAsync()
         {
-            command.CommandText = @"SELECT id, finger_print 
-                                    FROM eCapture_staff";
+            command.CommandText = @"SELECT user_id, finger_print 
+                                    FROM eCapture_capture";
             Dictionary<byte[], int> fingerprintsInDB = new Dictionary<byte[], int>();
 
             return Task.Run(() =>
@@ -159,8 +159,8 @@ namespace Fingerprint_Authentication.DB
         private Task<bool> checkIfStorageOfFingerprintWorkedAsync(byte[] originalByte)
         {
             command.CommandText = @"SELECT finger_print
-                                    FROM eCapture_staff 
-                                    WHERE id = " + id;
+                                    FROM eCapture_capture 
+                                    WHERE user_id = " + user_id;
             byte[] byteFromDB;
 
             return Task.Run(() =>

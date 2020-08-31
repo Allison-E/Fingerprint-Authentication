@@ -15,7 +15,7 @@ namespace Fingerprint_Authentication
     {
         private Verification verifier;
         private Dictionary<Template, int> deserialisedTemplatesFromDB;
-        private const int INT_N = 214748;
+        private const int INT_N = 214748;   // Indicates the precision of the fingerprint verification.
         private Task deserialiseFingerprintsFromDBTask;
 
         private void initialiseVerifier()
@@ -27,7 +27,7 @@ namespace Fingerprint_Authentication
             }
             catch
             {
-                WriteErrorStatus("Error: Could not initialise Verifier");
+                WriteErrorStatus("Could not initialise Verifier");
             }
         }
 
@@ -69,12 +69,12 @@ namespace Fingerprint_Authentication
                 if (id >= 0)
                 {
                     WriteGoodStatus("Match found");
-                    Application.Current.Shutdown(Convert.ToInt32(id));
+                    Application.Current?.Shutdown(Convert.ToInt32(id));
                 }
                 else
                 {
                     WriteErrorStatus("Match not found");
-                    Application.Current.Shutdown(Convert.ToInt32(id));
+                    Application.Current?.Shutdown(Convert.ToInt32(id));
                 }
             }
         }
