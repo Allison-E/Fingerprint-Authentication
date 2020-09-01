@@ -70,7 +70,7 @@ namespace Fingerprint_Authentication
                 {
                     WriteGoodStatus("Match found");
 
-                    bool attendanceIsMarked = false;
+                    bool attendanceIsMarked = false; 
                     try
                     {
                         attendanceIsMarked = await db.MarkPresentInAttendance(userID, Convert.ToInt32(args["eventID"]));
