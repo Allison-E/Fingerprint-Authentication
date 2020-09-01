@@ -73,8 +73,8 @@ namespace Fingerprint_Authentication
 					catch (DB.CouldNotStoreFingerprintInDBException)
 					{
 						MessageBox.Show("Fingerprint enrollment was unsuccessful. Please try again", "Something bad happened :(", MessageBoxButton.OK);
-                        Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
-                    }
+						Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
+					}
 
 					if (storageWasSuccessful)
 					{

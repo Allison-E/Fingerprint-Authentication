@@ -65,7 +65,7 @@ namespace Fingerprint_Authentication
             if (feature != null)
             {
                 WriteGoodStatus("The fingerprint feature set was created.");
-                string userID = findIDOfMatchingFingerprintAsync(feature).Result;
+                string userID = await findIDOfMatchingFingerprintAsync(feature);
                 if (userID != null || userID != "")
                 {
                     WriteGoodStatus("Match found");
