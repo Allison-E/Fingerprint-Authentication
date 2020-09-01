@@ -78,6 +78,7 @@ namespace Fingerprint_Authentication
 
 					if (storageWasSuccessful)
 					{
+                        WriteGoodStatus("Fingerprint enrollment done!");
 						MessageBox.Show("Fingerprint enrollment was successful!", "Success!", MessageBoxButton.OK);
 						Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
 					}

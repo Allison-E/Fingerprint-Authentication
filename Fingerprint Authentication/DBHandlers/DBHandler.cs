@@ -60,7 +60,7 @@ namespace Fingerprint_Authentication.DB
         /// <returns>A <c>Task<bool></c> which tells if the storage was successful or not.</returns>
         public Task<bool> StoreFingerprintInDBAsync(byte[] serialisedFingerprint)
         {
-            bool wasSuccessful;
+            bool wasSuccessful = false;
             command.CommandText = @"INSERT INTO eCapture_capture (user_id, finger_print)
                                     VALUES (@userIDParameter, @fingerprintParameter)";
             SQLiteParameter userIDParameter = new SQLiteParameter("@userIDParameter", user_id);
@@ -72,8 +72,6 @@ namespace Fingerprint_Authentication.DB
 
             return Task.Run(async () =>
             {
-                wasSuccessful = false;
-
                 try
                 {
                     connection.Open();

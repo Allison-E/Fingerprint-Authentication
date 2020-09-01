@@ -63,16 +63,67 @@ namespace Fingerprint_Authentication
                 {
                     case "enroll":
                         Title = "Fingerprint Enrollment";
-                        db.SetID(Convert.ToString(args["userID"]));
-                        startEnrolling();
+                        if (checkIfDictionaryIsComplete("enroll"))
+                        {
+                            db.SetID(Convert.ToString(args["userID"]));
+                            startEnrolling(); 
+                        }
                         break;
                     case "verify":
                         Title = "Fingerprint Verification";
-                        fingerprintsFromDBTask = db.GetFingerprintsFromDBAsync();
-                        startVerifying();
+                        if (checkIfDictionaryIsComplete("verify"))
+                        {
+                            fingerprintsFromDBTask = db.GetFingerprintsFromDBAsync();
+                            startVerifying(); 
+                        }
                         break;
                 }
            }
+        }
+
+        private bool checkIfDictionaryIsComplete(string function)
+        {
+            bool isComplete = true;
+            switch (function)
+            {
+                case "enroll":
+                    try
+                    {
+                        if (args["userID"] == null || args["userID"] == "")
+                        {
+                            isComplete = false;
+                            MessageBox.Show("UserID is empty. Please pass the userID argument to this application", "Something important is missing...", MessageBoxButton.OK, MessageBoxImage.Error);
+                            Application.Current?.Dispatcher.Invoke(() => Close());
+                        }
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        isComplete = false;
+                        MessageBox.Show("An argument missing. Please pass the userID argument to this application", "Something important is missing...", MessageBoxButton.OK, MessageBoxImage.Error);
+                        Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
+                    }
+
+                    break;
+                case "verify":
+                    try
+                    {
+                        if (args["eventID"] == null || args["eventID"] == "")
+                        {
+                            isComplete = false;
+                            MessageBox.Show("EventID is empty. Please pass the userID argument to this application", "Something important is missing...", MessageBoxButton.OK, MessageBoxImage.Error);
+                            Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
+                        }
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        isComplete = false;
+                        MessageBox.Show("An argument missing. Please pass the eventID argument to this application", "Something important is missing...", MessageBoxButton.OK, MessageBoxImage.Error);
+                        Application.Current?.Dispatcher.Invoke(() => Close());
+                    }
+
+                    break;
+            }
+            return isComplete;
         }
 
         #region Fingerprint capture related

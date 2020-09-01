@@ -24,12 +24,20 @@ namespace Fingerprint_Authentication
             {
                 if (isEven(i))
                 {
-                    arguments.Add(e.Args[i], e.Args[i + 1]);
+                    try
+                    {
+                        arguments.Add(e.Args[i], e.Args[i + 1]);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        MessageBox.Show("An argument missing. Please pass the all required arguments to this application", "Something important is missing...", MessageBoxButton.OK, MessageBoxImage.Error);
+                        Shutdown();
+                    }
                     i++;
                 }
             }
             mainWindow = new MainWindow(arguments);
-            mainWindow.Show();
+            mainWindow?.Show();
         }
 
         private bool isEven(int number)
