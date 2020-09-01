@@ -70,10 +70,10 @@ namespace Fingerprint_Authentication
                 {
                     WriteGoodStatus("Match found");
 
-                    bool storageWasSuccessful = false;
+                    bool attendanceIsMarked = false;
                     try
                     {
-                        storageWasSuccessful = await db.MarkPresentInAttendance(Convert.ToString(args["userID"]), Convert.ToInt32(args["eventID"]));
+                        attendanceIsMarked = await db.MarkPresentInAttendance(userID, Convert.ToInt32(args["eventID"]));
                     }
                     catch (DB.CouldNotMarkAttendanceException)
                     {
@@ -81,7 +81,7 @@ namespace Fingerprint_Authentication
                         Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
                     }
 
-                    if (storageWasSuccessful)
+                    if (attendanceIsMarked)
                     {
                         MessageBox.Show("Attendance marking was successful!", "You're in!", MessageBoxButton.OK);
                         Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());

@@ -81,9 +81,7 @@ namespace Fingerprint_Authentication.DB
                     try
                     {
                         // Cross-checks to make sure the fingerprint was saved.
-                        bool checkResult = await checkIfStorageOfFingerprintWorkedAsync(serialisedFingerprint);
-                        if (checkResult)
-                            wasSuccessful = true;
+                        wasSuccessful = await checkIfStorageOfFingerprintWorkedAsync(serialisedFingerprint);
                     }
                     catch (CouldNotFindSavedFingerprintsException)
                     {

@@ -13,7 +13,7 @@
             <ColumnDefinition Width="270"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <Image x:Name="imageBox" HorizontalAlignment="Left" Margin="10" VerticalAlignment="Stretch" Height="250" Grid.Column="0" Width="{Binding Height, RelativeSource={RelativeSource Self}}"/>
+        <Image x:Name="imageBox" HorizontalAlignment="Left" Margin="10" VerticalAlignment="Stretch" Height="250" Grid.Column="0" Width="{Binding Height, RelativeSource={RelativeSource Self}}" Stretch="UniformToFill"/>
         <Grid Grid.Column="1" Margin="0 10">
             <Label Content="Prompt:" Margin="10 0" Padding="0" Foreground="#FF6C6C6C" FontSize="13"/>
             <TextBlock x:Name="promptText" Margin="10 17 10 0" VerticalAlignment="Top"/>
