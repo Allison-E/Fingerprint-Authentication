@@ -37,7 +37,14 @@ namespace Fingerprint_Authentication
                 }
             }
             mainWindow = new MainWindow(arguments);
-            mainWindow?.Show();
+            try
+            {
+                mainWindow?.Show();
+            }
+            catch
+            {
+                
+            }
         }
 
         private bool isEven(int number)
