@@ -11,7 +11,7 @@ namespace Fingerprint_Authentication.DB
     public class DBHandler
     {
         static DBHandler _instance;
-        int user_id;
+        string user_id;
         int noOfChangesAllowedForTheId;
         SQLiteCommand command;
         SQLiteConnectionStringBuilder connectionStringBuilder;
@@ -44,7 +44,7 @@ namespace Fingerprint_Authentication.DB
         /// Note: This can only be set once in the lifetime of this application.
         /// </remarks>
         /// <param name="Id">The ID/key</param>
-        public void SetID(int Id)
+        public void SetID(string Id)
         {
             if (noOfChangesAllowedForTheId != 0)
             {
@@ -62,10 +62,13 @@ namespace Fingerprint_Authentication.DB
         {
             bool wasSuccessful;
             command.CommandText = @"INSERT INTO eCapture_capture (user_id, finger_print)
-                                    VALUES (" + user_id + ", @fingerprintParameter)";
+                                    VALUES (@userIDParameter, @fingerprintParameter)";
+            SQLiteParameter userIDParameter = new SQLiteParameter("@userIDParameter", user_id);
+            userIDParameter.DbType = DbType.String;
             SQLiteParameter fingerprintParameter = new SQLiteParameter("@fingerprintParameter", serialisedFingerprint);
             fingerprintParameter.DbType = DbType.Binary;
             command.Parameters.Add(fingerprintParameter);
+            command.Parameters.Add(userIDParameter);
 
             return Task.Run(async () =>
             {
@@ -102,11 +105,11 @@ namespace Fingerprint_Authentication.DB
             });
         }
 
-        public Task<Dictionary<byte[], int>> GetFingerprintsFromDBAsync()
+        public Task<Dictionary<byte[], string>> GetFingerprintsFromDBAsync()
         {
             command.CommandText = @"SELECT user_id, finger_print 
                                     FROM eCapture_capture";
-            Dictionary<byte[], int> fingerprintsInDB = new Dictionary<byte[], int>();
+            Dictionary<byte[], string> fingerprintsInDB = new Dictionary<byte[], string>();
 
             return Task.Run(() =>
             {
@@ -118,16 +121,15 @@ namespace Fingerprint_Authentication.DB
                         while (reader.Read())
                         {
                             byte[] fingerprint = null;
-                            int id = readARow(reader, out fingerprint);
-                            fingerprintsInDB.Add(fingerprint, id);
+                            string userID = readARow(reader, out fingerprint);
+                            fingerprintsInDB.Add(fingerprint, userID);
                         }
                     }
                     connection.Close();
                 }
                 catch
                 {
-                    //throw new CouldNotFindSavedFingerprintsException();
-
+                    throw new CouldNotFindSavedFingerprintsException();
                 }
                 finally
                 {
@@ -140,7 +142,7 @@ namespace Fingerprint_Authentication.DB
             });
         }
 
-        public Task<bool> MarkPresentInAttendance(int userID, int eventID)
+        public Task<bool> MarkPresentInAttendance(string userID, int eventID)
         {
             bool wasSuccessful;
             command.CommandText = @"INSERT INTO eCapture_attendance (present, excused, event_id, user_id)
@@ -148,11 +150,11 @@ namespace Fingerprint_Authentication.DB
             SQLiteParameter presentParam = new SQLiteParameter("@present", true);
             presentParam.DbType = DbType.Boolean;
             SQLiteParameter excusedParam = new SQLiteParameter("@excused", false);
-            presentParam.DbType = DbType.Boolean;
+            excusedParam.DbType = DbType.Boolean;
             SQLiteParameter event_idParam = new SQLiteParameter("@event_id", eventID);
-            presentParam.DbType = DbType.Int32;
+            event_idParam.DbType = DbType.Int32;
             SQLiteParameter user_idParam = new SQLiteParameter("@user_id", userID);
-            presentParam.DbType = DbType.Int32;
+            user_idParam.DbType = DbType.String;
             command.Parameters.Add(presentParam);
             command.Parameters.Add(excusedParam);
             command.Parameters.Add(event_idParam);
@@ -192,10 +194,10 @@ namespace Fingerprint_Authentication.DB
             });
         }
 
-        private int readARow(IDataRecord record, out byte[] serialisedFingerprint)
+        private string readARow(IDataRecord record, out byte[] serialisedFingerprint)
         {
             serialisedFingerprint = (byte[])record[1];
-            return Convert.ToInt32(record[0]);
+            return Convert.ToString(record[0]);
         }
 
         private void initialiseSqlStuff()
@@ -212,7 +214,7 @@ namespace Fingerprint_Authentication.DB
         {
             command.CommandText = @"SELECT finger_print
                                     FROM eCapture_capture 
-                                    WHERE user_id = " + user_id;
+                                    WHERE user_id = '" + user_id + "'";
             byte[] byteFromDB;
 
             return Task.Run(() =>
@@ -230,11 +232,11 @@ namespace Fingerprint_Authentication.DB
             });
         }
 
-        private Task<bool> checkIfAttedanceWasRegisteredAsync(int userID, int eventID)
+        private Task<bool> checkIfAttedanceWasRegisteredAsync(string userID, int eventID)
         {
             command.CommandText = @"SELECT present
                                     FROM eCapture_attendance 
-                                    WHERE user_id = " + userID + " AND event_id = " + eventID;
+                                    WHERE user_id = '" + userID + "' AND event_id = " + eventID;
             bool presentReturned;
 
             return Task.Run(() =>

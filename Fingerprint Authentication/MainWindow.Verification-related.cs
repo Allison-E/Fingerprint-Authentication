@@ -14,7 +14,7 @@ namespace Fingerprint_Authentication
     public partial class MainWindow
     {
         private Verification verifier;
-        private Dictionary<Template, int> deserialisedTemplatesFromDB;
+        private Dictionary<Template, string> deserialisedTemplatesFromDB;
         private const int INT_N = 214748;   // Indicates the precision of the fingerprint verification.
         private Task deserialiseFingerprintsFromDBTask;
 
@@ -34,13 +34,13 @@ namespace Fingerprint_Authentication
         private async void startVerifying()
         {
             initialiseVerifier();
-            deserialisedTemplatesFromDB = new Dictionary<Template, int>();
+            deserialisedTemplatesFromDB = new Dictionary<Template, string>();
             WriteStatus("Put your finger on the scanner.");
-            Dictionary<byte[], int> fingerprintsFromDB = await fingerprintsFromDBTask;
+            Dictionary<byte[], string> fingerprintsFromDB = await fingerprintsFromDBTask;
             deserialiseFingerprintsFromDBTask = deserialiseFingerprintsFromDBAsync(fingerprintsFromDB);
         }
 
-        private Task deserialiseFingerprintsFromDBAsync(Dictionary<byte[], int> serialisedFingerprints)
+        private Task deserialiseFingerprintsFromDBAsync(Dictionary<byte[], string> serialisedFingerprints)
         {
             return Task.Run(() =>
             {
@@ -48,7 +48,7 @@ namespace Fingerprint_Authentication
                 // new Template and ID in a dictionary.
                 for (int i = 0; i < serialisedFingerprints.Count; i++)
                 {
-                    KeyValuePair<byte[], int> pair = serialisedFingerprints.First();
+                    KeyValuePair<byte[], string> pair = serialisedFingerprints.First();
                     Template temp = new Template();
                     temp.DeSerialize(pair.Key);
 
@@ -65,15 +65,15 @@ namespace Fingerprint_Authentication
             if (feature != null)
             {
                 WriteGoodStatus("The fingerprint feature set was created.");
-                int id = findIDOfMatchingFingerprintAsync(feature).Result;
-                if (id >= 0)
+                string userID = findIDOfMatchingFingerprintAsync(feature).Result;
+                if (userID == null || userID == "")
                 {
                     WriteGoodStatus("Match found");
 
                     bool storageWasSuccessful = false;
                     try
                     {
-                        storageWasSuccessful = await db.MarkPresentInAttendance(Convert.ToInt32(args["userID"]), Convert.ToInt32(args["eventID"]));
+                        storageWasSuccessful = await db.MarkPresentInAttendance(Convert.ToString(args["userID"]), Convert.ToInt32(args["eventID"]));
                     }
                     catch (DB.CouldNotMarkAttendanceException)
                     {
@@ -101,26 +101,26 @@ namespace Fingerprint_Authentication
             }
         }
 
-        private async Task<int> findIDOfMatchingFingerprintAsync(FeatureSet feature)
+        private async Task<string> findIDOfMatchingFingerprintAsync(FeatureSet feature)
         {
-            int resultId = -100;    // I used a negative number because the IDs would always be positive
             await deserialiseFingerprintsFromDBTask;
+            string resultID = null;
 
-            Task<int> task = Task.Run(() =>
+            Task<string> task = Task.Run(() =>
             {
                 Verification.Result result;
 
                 for (int i = 0; i < deserialisedTemplatesFromDB.Count; i++)
                 {
                     result = null;
-                    KeyValuePair<Template, int> pair = deserialisedTemplatesFromDB.First();
+                    KeyValuePair<Template, string> pair = deserialisedTemplatesFromDB.First();
                     verifier.Verify(feature, pair.Key, ref result);
                     deserialisedTemplatesFromDB.Remove(pair.Key);
 
                     if (result.Verified)
-                        resultId = pair.Value;
+                        resultID = pair.Value;
                 }
-                return resultId;
+                return resultID;
             });
 
             return task.Result;

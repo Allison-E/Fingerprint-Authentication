@@ -32,7 +32,7 @@ namespace Fingerprint_Authentication
         private uint noOfScansLeft;
         private DB.DBHandler db;
         private readonly Dictionary<string, string> args;
-        private Task<Dictionary<byte[], int>> fingerprintsFromDBTask;
+        private Task<Dictionary<byte[], string>> fingerprintsFromDBTask;
 
         /// <summary>
         /// The window for either verification or enrollment of fingerprints
@@ -63,7 +63,7 @@ namespace Fingerprint_Authentication
                 {
                     case "enroll":
                         Title = "Fingerprint Enrollment";
-                        db.SetID(Convert.ToInt32(args["userID"]));
+                        db.SetID(Convert.ToString(args["userID"]));
                         startEnrolling();
                         break;
                     case "verify":
