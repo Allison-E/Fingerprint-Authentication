@@ -66,7 +66,7 @@ namespace Fingerprint_Authentication
             {
                 WriteGoodStatus("The fingerprint feature set was created.");
                 string userID = findIDOfMatchingFingerprintAsync(feature).Result;
-                if (userID == null || userID == "")
+                if (userID != null || userID != "")
                 {
                     WriteGoodStatus("Match found");
 
@@ -75,9 +75,9 @@ namespace Fingerprint_Authentication
                     {
                         attendanceIsMarked = await db.MarkPresentInAttendance(userID, Convert.ToInt32(args["eventID"]));
                     }
-                    catch (DB.CouldNotMarkAttendanceException)
+                    catch (DB.CouldNotMarkAttendanceException e)
                     {
-                        MessageBox.Show("Attendance marking was unsuccessful. Please try again.", "Uh oh :(", MessageBoxButton.OK);
+                        MessageBox.Show("Could not mark the attendance." + e.Message + "Please try again.", "Uh oh :(", MessageBoxButton.OK);
                         Application.Current?.Dispatcher.Invoke(() => Application.Current.Shutdown());
                     }
 
